@@ -1,4 +1,7 @@
-#The below code uses GA4 data in BigQuery to create a table aggregated to unique session ID. The Source, Medium and Campaign columns are then used to create Channel Groupings. The final table can then be used to analyse key onsite behaviour metrics, as well as identify which channels customers have derived from. 
+#The below code uses GA4 data in BigQuery to create a table aggregated to unique session ID. 
+#The Source, Medium and Campaign columns are then used to create Channel Groupings. 
+#The final table can then be used to analyse key onsite behaviour metrics, 
+#as well as identify which channels customers have derived from. 
 
 
 #Creating the table with one row per session
