@@ -1,1 +1,1 @@
-This data pipelining project uses GA4 data in BigQuery to create a table aggregated to unique session ID. The Source, Medium and Campaign columns are then used to create Channel Groupings. The final table can then be used to analyse key onsite behaviour metrics, as well as identify which channels customers have derived from.
+This project uses Kaggle data, and SKLearn to fit various binary classification models, segmenting customers as high and low propensity to convert. The fitted models are: Logistic regression, SVM and Gradient Boost.
