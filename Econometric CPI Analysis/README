@@ -1,0 +1,3 @@
+This project uses macroeconomic datasets (GDP, Employment Rate and Interest Rate) to identify their effect on house prices in the United Kingdom. The project uses regression models, and statistical analysis to analyse these relationships.
+
+The Academic paper explains the full project, whilst the Sample Code gives a reduced version of the code.
