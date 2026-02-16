@@ -164,7 +164,7 @@ KFS = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 42)
 # %% Training the Logistic Regression
         
 
-log_reg = LogisticRegression(solver='saga', class_weight='balanced', max_iter=1000)
+log_reg = LogisticRegression(solver='saga', class_weight='balanced', max_iter=2000)
 
 param_grid = {
     'penalty': ['l1', 'l2'],
@@ -181,47 +181,137 @@ grid_search_log_reg = GridSearchCV(
     n_jobs=1
 )
 
-grid_search_log_reg.fit(x_train_processed, y_train)
 
 
 
 # %% Storing in MLflow
 
+# ... (Lines 1-90 of your training/processing code are here) ...
+
+# %% Storing in MLflow
+
 import mlflow
-import mlflow.sklearn
+import os
+
+# This is the "Magic Line" that forces MLflow to save HERE
+PROJECT_ROOT = "/Users/jmthomas565/Desktop/Education/Machine Learning Practise/Customer Propensity Model"
+mlflow.set_tracking_uri(f"file://{PROJECT_ROOT}/mlruns")
+
+mlflow.set_experiment("Customer_Propensity_Project")
 
 # --- 1. Start the MLflow Run ---
-# Replace "Logistic_Regression_Experiment" with your desired experiment name
 # Replace "Tuned_L1_L2_LogReg" with a descriptive run name
-with mlflow.start_run(run_name="Tuned_L1_L2_LogReg") as run:
+with mlflow.start_run(run_name="Logistic_Regression_Tuned") as run:
 
-    # --- 2. Log Metrics & Parameters ---
-    
-    # Get the best hyperparameters found by GridSearchCV
-    best_params = grid_search_log_reg.best_params_
-    mlflow.log_params(best_params)
-    
-    # Get the best cross-validation score
-    best_score = grid_search_log_reg.best_score_
-    mlflow.log_metric("roc_auc_cv_score", best_score)
-    
-    # Log the number of folds for reproducibility
-    mlflow.log_param("cv_folds", grid_search_log_reg.cv)
-    
-    # --- 3. Log Model Artifact ---
+    log_reg = LogisticRegression(solver='saga', class_weight='balanced', max_iter=2000)
+
+    param_grid = {
+    'penalty': ['l1', 'l2'],
+    'C': [0.01, 0.1, 1, 10, 100]
+    }
+
+
+    grid_search_log_reg = GridSearchCV(
+        estimator=log_reg,
+        param_grid=param_grid,
+        cv=KFS,
+        scoring="roc_auc",
+        verbose=1,
+        n_jobs=1
+    )
+
+    grid_search_log_reg.fit(x_train_processed, y_train)
+
+
+# Logging
+    mlflow.log_params(grid_search_log_reg.best_params_)
+    mlflow.log_metric("roc_auc_cv_score", grid_search_log_reg.best_score_)
     
     # Log the best estimator found by the search. 
     # This is the production-ready model trained on the full dataset.
     mlflow.sklearn.log_model(
         sk_model=grid_search_log_reg.best_estimator_, 
         artifact_path="log_reg_model", # The folder path in MLflow UI
-        registered_model_name="Classification_LogReg_Model" # Name for the Model Registry
+        registered_model_name="Customer_Propensity_Project" # Name for the Model Registry
     )
     
     # Optional: Log the entire GridSearchCV object for full debug info
     # mlflow.sklearn.log_model(grid_search_log_reg, "full_search_object") 
 
     print(f"MLflow Run completed. Run ID: {run.info.run_id}")
-    print(f"Best ROC-AUC Score Logged: {best_score:.4f}")
+    print(f"Best ROC-AUC Score Logged: {grid_search_log_reg.best_score_:.4f}")
+
+
+
+
+# %% XG Boost Model
+
+    
+from xgboost import XGBClassifier
+
+
+y_train = y_train.astype(str).str.strip().str.lower().map({'no': 0, 'yes': 1})
+y_test = y_test.astype(str).str.strip().str.lower().map({'no': 0, 'yes': 1})
+
+
+
+
+with mlflow.start_run(run_name="XGBoost_Tuned") as run:
+
+    model = XGBClassifier(
+        objective = 'binary:logistic',
+        random_state = 42,
+        use_label_encoder=False,
+        eval_metric='logloss'
+    )
+
+
+    xgb_param_grid = {
+        'n_estimators': [100, 200],
+        'learning_rate': [0.01, 0.1, 0.2],
+        'max_depth': [3, 5, 7],
+        'subsample': [0.8, 1.0]
+    }
+
+
+    grid_search_xgb = GridSearchCV(
+        estimator=model,
+        param_grid=xgb_param_grid,
+        cv=KFS,
+        scoring="roc_auc",
+        verbose=1,
+        n_jobs=-1
+    )
+
+    grid_search_xgb.fit(x_train_processed, y_train)
+
+
+
+# Logging
+    mlflow.log_params(grid_search_xgb.best_params_)
+    mlflow.log_metric("roc_auc_cv_score", grid_search_xgb.best_score_)
+    
+    # Log the best estimator found by the search. 
+    # This is the production-ready model trained on the full dataset.
+    mlflow.sklearn.log_model(
+        sk_model=grid_search_xgb.best_estimator_, 
+        artifact_path="xgb_model", # The folder path in MLflow UI
+        registered_model_name="Customer_Propensity_Project" # Name for the Model Registry
+    )
+    
+
+    print(f"MLflow Run completed. Run ID: {run.info.run_id}")
+    print(f"Best ROC-AUC Score Logged: {grid_search_xgb.best_score_:.4f}")
+
+
+# %% Checking MLFlow
+
+#Running this in the terminal 
+
+#mlflow ui --backend-store-uri "file:///Users/jmthomas565/Desktop/Education/Machine Learning Practise/Customer Propensity Model/mlruns"
+
+
+
+print("Unique values in y_train:", y_train.unique())
 
 # %%

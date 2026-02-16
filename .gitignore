@@ -1,1 +1,13 @@
+# Python environment 
+customer_class_venv/
+**/venv/
+__pycashe__/
+*.pyc
+
+# ML flow 
+mlruns/
+.trash/
+
+
+# System files 
 .DS_Store
