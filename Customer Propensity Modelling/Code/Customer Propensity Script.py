@@ -161,27 +161,6 @@ for i, category_list in enumerate(ordinal_encoder.categories_):
 KFS = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 42)
 
 
-# %% Training the Logistic Regression
-        
-
-log_reg = LogisticRegression(solver='saga', class_weight='balanced', max_iter=2000)
-
-param_grid = {
-    'penalty': ['l1', 'l2'],
-    'C': [0.01, 0.1, 1, 10, 100]
-}
-
-
-grid_search_log_reg = GridSearchCV(
-    estimator=log_reg,
-    param_grid=param_grid,
-    cv=KFS,
-    scoring="roc_auc",
-    verbose=1,
-    n_jobs=1
-)
-
-
 
 
 # %% Storing in MLflow
@@ -192,6 +171,7 @@ grid_search_log_reg = GridSearchCV(
 
 import mlflow
 import os
+import mlflow.sklearn
 
 # This is the "Magic Line" that forces MLflow to save HERE
 PROJECT_ROOT = "/Users/jmthomas565/Desktop/Education/Machine Learning Practise/Customer Propensity Model"
@@ -231,8 +211,7 @@ with mlflow.start_run(run_name="Logistic_Regression_Tuned") as run:
     # This is the production-ready model trained on the full dataset.
     mlflow.sklearn.log_model(
         sk_model=grid_search_log_reg.best_estimator_, 
-        artifact_path="log_reg_model", # The folder path in MLflow UI
-        registered_model_name="Customer_Propensity_Project" # Name for the Model Registry
+        artifact_path="model", # The folder path in MLflow UI
     )
     
     # Optional: Log the entire GridSearchCV object for full debug info
@@ -248,6 +227,7 @@ with mlflow.start_run(run_name="Logistic_Regression_Tuned") as run:
 
     
 from xgboost import XGBClassifier
+import mlflow.xgboost
 
 
 y_train = y_train.astype(str).str.strip().str.lower().map({'no': 0, 'yes': 1})
@@ -259,46 +239,53 @@ y_test = y_test.astype(str).str.strip().str.lower().map({'no': 0, 'yes': 1})
 with mlflow.start_run(run_name="XGBoost_Tuned") as run:
 
     model = XGBClassifier(
-        objective = 'binary:logistic',
-        random_state = 42,
-        use_label_encoder=False,
-        eval_metric='logloss'
+    objective = 'binary:logistic',
+    random_state = 42,
+    use_label_encoder=False,
+    eval_metric='logloss'
     )
 
 
     xgb_param_grid = {
-        'n_estimators': [100, 200],
-        'learning_rate': [0.01, 0.1, 0.2],
-        'max_depth': [3, 5, 7],
-        'subsample': [0.8, 1.0]
+    'n_estimators': [100, 200],
+    'learning_rate': [0.01, 0.1, 0.2],
+    'max_depth': [3, 5, 7],
+    'subsample': [0.8, 1.0]
     }
 
 
     grid_search_xgb = GridSearchCV(
-        estimator=model,
-        param_grid=xgb_param_grid,
-        cv=KFS,
-        scoring="roc_auc",
-        verbose=1,
-        n_jobs=-1
+    estimator=model,
+    param_grid=xgb_param_grid,
+    cv=KFS,
+    scoring="roc_auc",
+    verbose=1,
+    n_jobs=-1
     )
 
     grid_search_xgb.fit(x_train_processed, y_train)
 
 
 
-# Logging
+    # Logging
     mlflow.log_params(grid_search_xgb.best_params_)
     mlflow.log_metric("roc_auc_cv_score", grid_search_xgb.best_score_)
-    
+
+
     # Log the best estimator found by the search. 
     # This is the production-ready model trained on the full dataset.
     mlflow.sklearn.log_model(
-        sk_model=grid_search_xgb.best_estimator_, 
-        artifact_path="xgb_model", # The folder path in MLflow UI
-        registered_model_name="Customer_Propensity_Project" # Name for the Model Registry
+    sk_model=grid_search_xgb.best_estimator_, 
+    artifact_path="model", # The folder path in MLflow UI
+    registered_model_name="Customer_Propensity_Project" # Name for the Model Registry
     )
-    
+
+
+    mlflow.xgboost.log_model(
+    xgb_model=grid_search_xgb.best_estimator_, 
+    artifact_path="model" # <--- This MUST be "model" to match your Gatekeeper
+    )
+
 
     print(f"MLflow Run completed. Run ID: {run.info.run_id}")
     print(f"Best ROC-AUC Score Logged: {grid_search_xgb.best_score_:.4f}")
@@ -314,4 +301,167 @@ with mlflow.start_run(run_name="XGBoost_Tuned") as run:
 
 print("Unique values in y_train:", y_train.unique())
 
-# %%
+
+
+# %% Selecting the winning model 
+
+import mlflow
+from mlflow.tracking import MlflowClient
+
+# 1. Initialize the client
+client = MlflowClient()
+
+# 2. Get the experiment ID (using the name you set earlier)
+experiment = client.get_experiment_by_name("Customer_Propensity_Project")
+experiment_id = experiment.experiment_id
+
+# 3. Search for all runs in this experiment, sorted by your metric
+runs = client.search_runs(
+    experiment_ids=[experiment_id],
+    filter_string="",
+    run_view_type=mlflow.entities.ViewType.ACTIVE_ONLY,
+    max_results=1,
+    order_by=["metrics.roc_auc_cv_score DESC"] # DESC means highest score first
+)
+
+
+# 4. Extract the winner
+if runs:
+    
+    best_run = runs[0]
+    best_score = best_run.data.metrics["roc_auc_cv_score"]
+    best_run_name = best_run.data.tags.get("mlflow.runName", "Unnamed Run")
+    
+    print("-" * 30)
+    print(f"🏆 WINNER FOUND IN MLFLOW!")
+    print(f"Model: {best_run_name}")
+    print(f"Best Score: {best_score:.4f}")
+    print(f"Run ID: {best_run.info.run_id}")
+    print("-" * 30)
+else:
+    print("No runs found in MLflow.")
+
+# %% 🏆 AUTOMATED WINNER SELECTION & PROMOTION
+
+from mlflow.tracking import MlflowClient
+import mlflow
+
+client = MlflowClient()
+model_name = "Customer_Propensity_Project"
+metric_name = "roc_auc_cv_score"
+
+# 1. Get the current Production model's performance
+production_score = 0.0
+try:
+    winner = client.search_runs(...)[0]
+
+    prod_run = client.get_run(latest_prod.run_id)
+    production_score = prod_run.data.metrics.get(metric_name, 0.0)
+    print(f"Current Production Score: {production_score:.4f}")
+except Exception:
+    print("No existing Production model found. Proceeding with first deployment.")
+
+# 2. Find the best candidate from your recent experiment
+experiment = client.get_experiment_by_name("Customer_Propensity_Project")
+best_run = client.search_runs(
+    experiment_ids=[experiment.experiment_id],
+    max_results=1,
+    order_by=[f"metrics.{metric_name} DESC"]
+)[0]
+
+candidate_score = best_run.data.metrics[metric_name]
+candidate_uri = f"runs:/{best_run.info.run_id}/model"
+
+# 3. The "Gatekeeper" Logic
+if candidate_score > production_score:
+    print(f"🏆 Challenger ({candidate_score:.4f}) beats Champion ({production_score:.4f}). Promoting...")
+    new_version = mlflow.register_model(model_uri=candidate_uri, name=model_name)
+    
+    client.transition_model_version_stage(
+        name=model_name,
+        version=new_version.version,
+        stage="Production",
+        archive_existing_versions=True
+    )
+else:
+    print(f"✋ Challenger ({candidate_score:.4f}) did not beat Champion. No promotion.")
+# %% Test Cell
+    
+# 1. Check if the model folder actually exists in your run
+artifacts = client.list_artifacts(best_run.info.run_id)
+print("Files in this run:")
+for a in artifacts:
+    print(f" - {a.path}")
+
+# 2. Verify the URI you are sending to the registry
+print(f"\nAttempting to register from: runs:/{best_run.info.run_id}/model")
+
+
+# %% Predicting new customers
+
+
+import mlflow
+import pandas as pd
+
+# 1. Connect to your MLflow server
+mlflow.set_tracking_uri("http://localhost:5000")
+
+# 2. Define the "Address" of your Production model
+# We use the 'Production' stage to ensure we always get the winner
+model_name = "Customer_Propensity_Project"
+model_uri = f"models:/{model_name}/Production"
+
+# 3. Load the model as a 'PyFunc' (Python Function)
+# This is the "Senior" way because it works regardless of whether the 
+# model was XGBoost or Logistic Regression!
+model = mlflow.pyfunc.load_model(model_uri)
+
+# 4. Prepare your new data (Simulating 2 new customers)
+# IMPORTANT: These columns must match your training data exactly
+new_customers = pd.DataFrame({
+    'age': [34, 58],
+    'job': ["unemployed", "housemaid"],
+    'marital': ["single", "single"],
+    'education': ["secondary", "unknown"],
+    'default': ["no", "no"],
+    'balance': [12, 360],
+    'housing': ["yes", "yes"],
+    'loan': ["yes", "no"],
+    'contact': ["unknown", "telephone"],
+    'day': [12, 2],
+    'month': ["aug", "feb"],
+    'duration': [104, 264],
+    'campaign': [3, 2],
+    'pdays': [-1, 4],
+    'previous': [1, 3],
+    'poutcome': ["unknown", "failure"]
+
+    # ... add all other columns your model expects ...
+})
+
+
+# %% Transforming Prediction Data
+
+import mlflow.xgboost
+
+# 1. Load the model SPECIFICALLY as an XGBoost object
+# This ensures it has the .predict_proba() method natively
+model_uri = f"models:/Customer_Propensity_Project/Production"
+xgb_model = mlflow.xgboost.load_model(model_uri)
+
+# 2. Generate the numbers using your processor
+numeric_matrix = processor.transform(new_customers)
+
+# 3. Get the Probabilities (Propensity Scores)
+# Now this will work PERFECTLY because xgb_model is a true XGBoost object
+probs = xgb_model.predict_proba(numeric_matrix)[:, 1]
+
+# 4. Get the hard Y/N Predictions
+preds = xgb_model.predict(numeric_matrix)
+
+# 5. Assign to your table
+new_customers['propensity_score'] = probs
+new_customers['final_prediction'] = preds
+
+# 6. Show the results
+print(new_customers[['age', 'propensity_score', 'final_prediction']])
