@@ -1,0 +1,1730 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage[draft]{hyperref}
+\usepackage{xcolor, soul}
+\usepackage{amsmath}
+\usepackage{longtable}
+\usepackage{amsfonts}
+\usepackage{parskip}
+\usepackage{booktabs} 
+\usepackage{siunitx}
+\usepackage[hyphens]{url}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage[paper=a4paper]{geometry}
+\usepackage{makecell}
+\usepackage{chngcntr}
+\counterwithin{figure}{section}
+\counterwithin{table}{section}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % Clear all headers and footers
+\fancyhead[C]{Marketing Mix Modelling: Regularised Regression with Time Series Analysis} % Center header
+\fancyfoot[C]{\thepage} % Center page number in footer
+
+
+% For setting margins and page layout
+\usepackage[top=25mm, left=25mm, right=20mm, bottom=20mm]{geometry}
+
+% For setting custom font sizes for headings
+\usepackage{sectsty}
+
+% For controlling paragraph spacing and removing indents
+\usepackage{parskip}
+
+% For custom headers and footers
+\usepackage{fancyhdr}
+
+% To enable links in the document
+\usepackage{hyperref}
+
+% To allow for special symbols in the title if needed
+\usepackage{amsmath, amssymb}
+
+% A readable font; you can change this, but be consistent
+\usepackage{lmodern}
+
+% Set chapter title to 14pt
+\chapterfont{\fontsize{14pt}{14.4pt}\selectfont}
+
+% Set section and subsection titles to 12pt
+\sectionfont{\fontsize{12pt}{14.4pt}\selectfont}
+\subsectionfont{\fontsize{12pt}{12pt}\selectfont}
+
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.8\baselineskip}
+
+\newcommand{\subsubsubsection}[1]{\paragraph{#1}\mbox{}\\}
+
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+
+{\LARGE Marketing Mix Modelling: \\Regularised Regression with Time Series Analysis}
+
+\vspace{1cm}
+
+Joe Meyer-Thomas
+
+\vfill
+
+A dissertation submitted in partial fulfilment of the requirements\\
+for the MSc in Applied Statistics by Joe Meyer-Thomas
+
+\vspace{2cm}
+
+School of Computing and Mathematical Sciences
+
+\vspace{1cm}
+
+Birkbeck, University of London
+
+\vspace{1cm}
+
+September 2025
+
+\end{titlepage}
+
+
+\newpage
+
+\section*{Academic declaration}
+\addcontentsline{toc}{section}
+{Academic Declaration}
+
+This report is the result of my own work except where explicitly indicated in the text. I give my permission for it to be submitted to the TURNITIN Plagiarism Detection Service. I have read and understood the sections on plagiarism in the College website and the Policy and Procedures on academic integrity. The report may be freely copied and distributed provided the source is explicitly acknowledged.
+
+\newpage
+
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+
+Huge amounts are spent on advertising, but significant problems persist in correctly identifying which portion of this investment is successful at driving revenue to companies. Marketing Mix Modelling (MMM) provides a solution to help identify the relationship between a marketing channel’s budget allocation and the revenue it generates. 
+
+This project assesses how accurately MMM techniques can model the relationship between a specific marketing channel’s budget spent and revenue generated. Techniques and approaches were reviewed systematically on a synthetic bicycle store dataset. This dataset consists of weekly sales, and weekly spends for seven marketing channels. Control variables are also utilised, in order to optimise the model. These are GDP, Unemployment Rate and the Federal Funds Effective Rate. 
+
+A ridge regression model was adopted, due to its ability to deal with multicollinearity, as well as other desirable characteristics. The model was optimised using well-established MMM techniques, saturation and adstock, whilst the time series nature of the data was considered at lengths. 
+
+The project successfully delivered a strong performing model. However, this was only possible after the removal of certain marketing channels. A key decision had to be made in order to balance the trade-off between statistical rigour and offering business insight. 
+
+In conclusion, the project corroborates with many of the limitations suggested by some of the MMM literature. Whilst MMM techniques were able to improve the model, 
+It was established that these techniques should be applied with rigour and precision, in order to achieve an optimal result. 
+
+\newpage
+
+%\newpage
+\tableofcontents
+\newpage
+\listoffigures
+\newpage
+\listoftables
+
+
+\newpage
+
+\section*{Acknowledgement}
+\addcontentsline{toc}{section}
+{Acknowledgement}
+
+I would like to thank my Supervisor Dr Anthony Brooms, who provided me with continued support and much valued expertise around time series and regression analysis throughout this process. I would also like to thank Dr Swati Chandna and Dr Richard Pymar who helped me to develop key understanding in probability theory and statistical analysis. Finally I would like to thank Dr Alberto Matuozzo who greatly assisted in my comprehension and passion of statistical learning techniques. 
+
+\newpage
+
+\section{Introduction }
+
+\subsection{General Description of the Problem
+}
+Every year, companies invest substantial amounts in advertising spend. Despite this, there are significant difficulties in measuring the effectiveness of this activity, particularly in accurately modelling the relationship between marketing budget spend and the revenue it generates. This paper analyses whether Marketing Mix Modelling (MMM) techniques can accurately quantify these relationships and provide meaningful insights to marketing teams.
+
+Gartner’s CMO (Chief Marketing Officer)’s 2025 Survey found that on average, marketing budgets equate to 7.7\% of company revenue (Gartner, 2025). The Advertising Association and WARC’s Expenditure Report found that the “UK’s ad market was worth £40.7bn in 2024, a rise of 11.2\% year-on-year.” (Advertising Association, 2025). Given these significant investments, measuring marketing’s effectiveness at helping the company drive customers to purchase products and services is vital. 
+
+In recent decades, the advertising industry has made great advances in measurement capabilities. However, there are still a host of difficulties in evaluating the effectiveness of marketing. 
+
+In the advertising industry, the word channel refers to a particular medium used to promote goods and services. Often a channel will have the desired effect of sending a prospective customer to a website (in order to incentivise a purchase). However, sometimes a channel will solely intend to build brand awareness, without delivering website traffic for the business. Examples of marketing channels are as follows: Google Search, Facebook Ads, Instagram Ads, Television, Radio. 
+
+Each marketing channel has its own complications with regards to measuring its effectiveness. One of the most prominent factors determining these complications is whether the channel is Offline or Online (digital). For this reason, the complications will be discussed below with this division in mind. 
+
+
+\subsection{
+Problems around Online Advertising}
+
+Online (or digital advertising) is far easier to track than its offline counterpart. The advancement of digital advertising channels (such as Google Search, Google Shopping and Facebook Ads) in recent decades has brought with it a wealth of new technologies which enable tracking capabilities. These include advertising cookies (which enable a company to track user interactions and engagement), and 
+and web-analytics platforms (which allow companies to analyse data produced by these interactions). This means that a click (which occurs off of a website) can usually be tracked right up to the sale (which occurs on the website). The origin of this click can also be identified, meaning that a marketer can correctly attribute any revenue made to a particular channel. \par
+
+This may seem like the holy grail to marketers, and is certainly a huge advancement on Offline Advertising (to be discussed shortly). However, measuring online advertising still suffers from some significant problems. Users can both delete existing cookies (meaning tracking is lost), or not accept cookies in the first place (meaning tracking never starts). Furthermore, governments are increasingly clamping down on companies which do not abide by stricter cookie policies. Examples of recent legislation are the UK’s General Data Protection Regulation (GDPR), which came into force in 2018 (Data Protection Act, 2018), and the California Consumer Privacy Act (CCPA) from 2020 (California Consumer Privacy Act, 2020).\par
+
+Other tracking complications center around what is known in the industry as “attribution”. This term refers to which advertising channel receives the credit for a given transaction. Complex user journeys mean that identifying one (or even several) responsible advertising channels, via clicks and engagement is very difficult.
+
+Complications are exacerbated by the fact that every media buying or analytics platform will give a different view on this, often in accordance to its vested interest. For example, the Google Search platform may use certain rules and logic which over-inflate their attributed transactions towards the Google Search channel. As such, digital tracking has no single source of truth.\\
+
+\subsection{Problems around Offline Advertising}
+
+Offline advertising poses even greater complications. When a marketer runs an advert on television or radio, the advert will not receive any kind of click or trackable engagement from the user. This means it is extremely difficult to attribute revenue or sales to these offline sources. Connected TV (CTV)'s recent rise to prominence has brought advancements in this area, delivering some digital tracking capabilities. However, despite this, most off-line advertising still operates with extremely limited measurement functionality, meaning that huge budgets are often spent on these channels with limited certainty about their impact on revenue.
+
+\subsection{Marketing Mix Modelling}
+In response to these wide-spread problems around measuring marketing effectiveness, MMM has emerged as a more robust statistical approach. MMMs draw from statistical and econometric techniques, aiming to measure the effectiveness of each marketing channel at driving sales or revenue. 
+MMMs do not try to attribute sales or revenue to a particular marketing channel by following a tracked click, but rather use first-party company data to identify relationships between revenue and marketing spend. 
+
+
+Sales or revenue are usually set as the response variable, whilst marketing spend (per channel) is used as the explanatory variables. The model aims to draw a causal relationship between each marketing channel and the amount of sales or revenue it drives. The output of the model would then be utilised by marketing teams, when allocating budgets to various marketing channels. 
+
+Meridian's technical documentation (Google's proprietary MMM solution) explains that often marketing experimental designs require individual user-level data, which have certain privacy concerns. MMM techniques, however, use aggregated observation data, which is privacy safe (Google, n.d.). 
+
+In spite of this significant advantage, there remains some skepticism around how well MMM techniques can accurately model marketing effectiveness. Google's publication, 'Challenges And Opportunities In Media Mix Modeling' (Chan and Perry, 2017) outlines many of these problems, including areas such as data limitations, correlated input variables, and model selection uncertainties. This paper will examine some of the key challenges that MMM techniques face, and interrogate how well specific methodologies are able to tackle these challenges. 
+
+\subsection{Project Aim}
+The aim of this project is as follows:
+
+To assess how accurately Marketing Mix Modelling techniques can model the relationship between a specific marketing channel’s budget spent and revenue generated. 
+
+\subsection{Project Structure }
+
+This subsection will give a brief overview of the thesis structure. The next chapter Literature Review and Relevant Work will discuss key publications and literature on MMM techniques. Following this will be the Data chapter. This will introduce the datasets used in the project, as well as providing some descriptive statistics and plots. Following this, is the Evaluation and Validation Framework chapter, where the train-test and validation processes are explained, and evaluation scores are established. Methodologies and Implementation is the next chapter. This critically reviews which methodologies and methods were chosen from the literature review, and how they were implemented. Following this is the Testing and Evaluation chapter. This chapter provides an in-depth analysis of the performance and diagnostics of each model. Next is the Discussion chapter, which debates the strengths and limitations of the project. The final chapter is the Conclusion, which draws the analysis to a close, and suggests ideas for future research. 
+
+
+\section{Literature Review and Relevant work }
+
+In order to discuss relevant literature and work conducted in this remit, five key areas have been identified. These are: Model functional form; Time series implications; AdStock effects; Saturation effects; Regularisation.
+
+Given the project aim stated in the previous section, all of these key areas will be discussed in relation to this research problem. Methodologies suggested by relevant publications will be critically reviewed and evaluated on the extent to which they assist modelling the relationship between a marketing channel’s budget spent and revenue generated.
+
+Before reviewing the key areas of relevant work, the discussion should begin with a conversation on  solutions and service providers developed in this area. MMM has gained huge popularity over the last decade, with several multinational companies releasing their solutions to the problem. The most famous of these are Meta’s Robyn (an open-source frequentist R solution) (Meta, 2024), and Google’s Meridian (an open-source Bayesian Python solution) (Google, n.d.). Uber has also released a solution named Orbit (Uber, 2021). In addition to household brands releasing MMM solutions, several service providers have responded to the problem by developing their own proprietary software, among them are companies like Recast (Recast, 2019) and Aryma Labs (Aryma Labs, 2022). Some of these companies have released comprehensive technical documentation and marketing material on the subject of MMM, some of which will be drawn upon in this literature review.
+
+
+\subsection{AdStock}
+
+A key aspect of a marketing channel’s effect on customers (and therefore revenue generated) is the length of time an advert influences the customer after the customer was exposed to the advert. It is often the case that a customer will be exposed to a particular advert, before waiting days, weeks, or even months to buy the advertised product or service. The timespan in between the advert exposure and the purchase will vary greatly depending on industry and marketing channel. This lag, or carry-over effect is known in MMM terminology as Adstock. 
+
+\subsubsection{Geometric Decay}
+
+The simplest form of adstock is the geometric decay. This is where the peak of the advertising’s influence on the consumer is at the time of the advert exposure. After then the influence shows a geometric decrease (represented by Figure 2.1). 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=12cm]{Geometric Decay.png}
+    \caption{Recreated from analyticsartist.wordpress.com (2014). The red bar represents the initial advertising exposure, whilst the grey bars represent the adstock effect with a geometric decay.}
+    \label{fig:galaxy}
+\end{figure}
+\\\\
+Chen et. al (2021, p. 2946) show that the adstock function can be represented using the equation 1:
+
+\begin{equation}y_{t}=\sum_{\tau=0}^{\l-1}\alpha^{\tau}x_{t-\tau}\end{equation}
+
+where $\alpha\in (0,1)$ denotes the adstock decay rate and $l$ denotes the number of weeks after which the carry-over effect becomes negligible.
+
+
+The publication explains that $\alpha$ can be determined using a "rule of thumb based on experience, or estimating $\alpha$ in a pre-processing step." This "experience based" method alludes to a Bayesian framework. Bayesian estimation is an area that is used extensively across MMM literature. Using these techniques allow a business to use prior beliefs based on previous experimentation on marketing effectiveness. A Bayesian framework does however mean that there is less emphasis on the data itself, and for this reason the paper will focus on a frequentist approach. 
+
+Returning to the discussion on the geometric decay function. In fact, by expanding this equation, it can be seen that this is nothing more than an infinite series: 
+
+\begin{equation}
+y_{t}=x_{t} + \alpha x_{t-1} + \alpha^{2}x_{t-2} + \alpha^{3}x_{t-3}\,...
+\end{equation}
+
+Recast (an MMM service provider previously mentioned), in their technical documentation  explain the benefits of using this geometric decay function to model adstock. The primary benefit of this form is its simplicity. The fact that it only uses one parameter $\alpha$ (decay rate) means that the form is very easy to interpret. Recast use the example of setting $\alpha$ = 0.75, which would mean that 75\% of an advert’s influence in period one would carry over into period two. This easy interpretability is clearly very useful when explaining the model to less-technical stakeholders.
+
+The main drawback of using this form however, is that, using only one parameter, doesn’t provide much flexibility around the shape of the media’s effect. 
+
+\subsubsection{Weibull Distribution}
+
+The Weibull distribution however has far more flexibility, where the geometric decay falls down. Ekimetrics \& Annalect suggested in their report that the Weibull distribution is far better at fitting the behaviour of modern advertising activity like Meta Ads (Facebook Research, n.d.).
+
+Recast’s technical documentation highlights that the Weibull distribution provides more flexibility in the shape and scale of the distribution. However, given that the distribution takes two parameters, it can take longer to run than using geometric decay. Furthermore this added layer of complexity can make using the distribution more difficult to explain to a non-technical audience. Recast notes that two forms of the Weibull distribution can be used to model the adstock effect: The Weibull PDF and the Weibull CDF. \\
+
+\subsubsection*{Weibull CDF}
+
+The Weibull CDF takes 2 parameters: shape and scale. Whilst geometric decay assumes a fixed decay rate, the Weibull CDF has a more flexible one. Given that every advertising channel will have differing rates of decay for their influence on the consumer, this works as a huge advantage of the Weibull CDF (over geometric decay). 
+
+The larger the shape parameter, the more S-shaped the distribution will be, whilst the smaller the shape parameter, the more L-shaped the distribution will be. The scale parameter controls the inflection point of the decay curve. This function would appropriately model advertising, when it is expected that the peak of the effect occurs at the same time that the customer is exposed to the advert.  
+
+\subsubsection*{Weibull PDF}
+
+The Weibull PDF also takes two parameters, but it also introduces a lagged effect. This distribution alos has the advantage of added flexibility over decay rates (as previously explained, a huge advantage when modelling different advertising channels). Because of this function’s lag effect, however, it would better model the effects of advertising, when it’s expected that the peak of the effect occurs after the customer is exposed to the advert. 
+
+\subsubsection{Radial kernel basis function}
+
+Jin et. al (2017, p. 3) also discusses this problem of whether the peak effect of the advertising occurs during or after the customer’s exposure to the advert. They also suggest the geometric decay to model where the peak occurs during, however they suggest using the Radial Kernel Basis function is appropriate for modelling where the influence occurs after the exposure. 
+
+\subsection{Saturation}
+
+Another vital aspect of a marketing channel’s effect on customers is the saturation effect. This concept is inherited from the field of microeconomics, where the term diminishing marginal returns is used instead (see Figure 2.2). Diminishing marginal returns refers to the concept that each additional unit of capital invested in a business yields progressively smaller increases in output. Analogously, the saturation effect in MMM says that as more budget is allocated to a marketing channel, the resulting revenue continues to grow, but at a decreasing rate. Chen et. al (2021, p. 2946) offers a suitable explanation as to why this effect occurs in marketing: “because of the fact that the targeted population exposed to the advertisement is finite.”
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{Diminishing Marginal Returns.png}
+    \caption{Concave curve representing diminishing marginal returns, $k =$ capital input, $q =$ output}
+    \label{fig:galaxy}
+\end{figure}
+
+
+\subsubsection{Hill Function}
+
+Throughout the MMM literature the Hill Function is advocated for as the best choice for modelling the saturation effect. Jin et. al (2017, p. 3) notes that the Hill Function has its origins in pharmacology. They explain that this sigmoid function models nonlinear responses to a particular drug and converts well to the effect of advertising saturation. Recast (2025) also states in their model technical documentation that they use the Hill function.
+\newpage
+The Hill Function takes the following form:
+
+\begin{equation}
+    Hill(x_{t,m};K_{m},S_{m}) = \frac{1}{1 + (x_{t,m}/K_{m})^{-S_{m}}}
+\end{equation}
+\\
+where $S_{m}>0$ denotes the shape parameter and
+$K_{m}>0$ denotes the half-saturation point.
+
+The following comments offer some intuition around how the Hill Function is parameterised: 
+When $x>K$: the Hill function takes on a large value, meaning the advertising channel’s influence on the consumer is large.
+
+When $x = K$: the Hill function equals $½$, meaning the advertising channel’s effect is at its half-way point. This is also defined as the saturation point, and means that the function takes a value at its inflection point.
+
+When $K > x$: the Hill function takes on a small value. This would be because the media activity is too insufficient to drive a significant response in the customer.
+
+It is worth noting that this final effect (when $K > x$) is exactly why using a sigmoid function, such as the Hill Function, rather than a simple monotonically increasing concave function, models the relationship between a channel’s advertising spend and revenue generated, so well. At low levels of media spend (and hence activity), it is very unlikely that a significant response will be elicited from the consumer. This is largely due to the fact that a low level of media activity, means that the prospective customer hasn’t been served the advert many times (rendering the influence of the advert unsubstantial). The Hill Function, using different values of $s$ and $K$ is shown in Figure 2.3. 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=12cm]{Hill Function Paramters.png}
+    \caption{Recreated from Robyn's technical documentation. The left graph shows how $K$ changes when $s$ is held fixed. The right graph shows how $s$ changes when $K$ is held fixed.}
+    \label{fig:galaxy}
+\end{figure}
+
+
+\subsection{Functional Form}
+
+
+The functional form of the model should appropriately fit the behaviour and effect of advertising channels. 
+
+There are a number of factors which impact the relationship between a change in marketing channel budget and its corresponding change in sales. The functional form that is chosen should model these specifications well and should have sufficiently detailed parameterisation.
+
+Literature has diverging views on the most appropriate functional form to handle MMM. Furthermore there is a wide body of literature which reviews common parameterisation of the form. Methods of parameterisation are also greatly debated. 
+\newpage
+
+Mhitarean-Cuvsinov (2017, p. 3) begins their discussion, suggesting a linear model: 
+\begin{equation}
+    y_{t}=\beta_{0} + \beta_{1}x_{1t} + \beta_{2}x_{2t} + ... + \beta_{m}x_{mt} + \epsilon_{t}
+\end{equation}
+where:\\
+\hspace{1cm}
+\begin{tabular}{r@{ : }p{10cm}}
+$y_{t}$ & The dependent variable (revenue) at time $t$ $(t=1,...,T,$ where $T$ is the number of observations)\\ 
+$x_{mt}$ & The value of the independent variable (marketing spend) $M$ in period $t, (m=1,...,M,$ where $M$ is the number of channels)\\
+$\beta_{0},\beta_{1},...,\beta_{K}$ & Model parameters\\
+$\epsilon_{t}$ & The error term\\
+\end{tabular}
+
+They explain that one benefit of this form is the ease of interpretability of the coefficients. The main drawback, however, is that it doesn’t represent the effect of advertising very well. Due to the saturation effect (which will be discussed in more detail in following sections), advertising generally follows a concave, monotonically increasing function. Given that the linear model does not exhibit this property, it is unsuitable for the model. \\
+
+The publication then goes on to suggest a multiplicative functional form:
+\begin{equation}
+y_{t}=\beta_{0}x^{\beta1}_{1t}\epsilon_{t},\;\;\;\;\;x_{1t}\geq0, \;\;\;\;0<\beta1<1
+\end{equation}
+The non-negativity constraint placed on the independent variables is due to the fair assumption that spend on a marketing channel must be positive. Constraining the coefficients’ lower bounds to zero is due to the assumption that a marketing channel’s spend cannot have a negative impact on revenue. Although not stated in this publication, this is in fact a strong assumption and one that will be reviewed in more detail in later sections.
+
+Equation 5 is known as the multiplicative power model and more accurately represents the diminishing marginal returns effect that advertising exhibits. The coefficient’s upper bound constraint means that the response is modelled as a concave function, which helps achieve this (to be discussed further in later sections). \\
+
+Another benefit of this functional form is that it also models interaction between marketing channel effects. A simple example of when this might occur would be when a television advert is run concurrently with a Google Search campaign. The television advert would likely increase searches on Google, leading to a higher engagement with Google Search Ads. Therefore, in this example, the two channels would work synergistically.
+
+Note that by taking the logarithms of both sides, this model can be linearised: 
+\begin{equation}
+lny_{t}=ln\beta0+\beta1lnx_{1t}+ln\epsilon_{t},\;\;\;\;\;x_{1t}\geq0,\;\;\;\;0<\beta1<1
+\end{equation}
+This may allow for more intuitive analysis.
+
+Chan and Perry (2017, p. 5) do not mention the multiplicative effect of advertising channels and only discuss an additive model. They do, however, suggest incorporating certain control variables, such as weather, seasonality, and market conditions. These are used to isolate the effect of a marketing channel on revenue generation. This is an astute decision, given that often revenue generation for a business can fluctuate widely, due to these additional factors. The publication suggests this model: 
+\begin{equation}
+    y_{t}=\sum_{m=1}^{M}
+    \beta_mf_m(x_{t-L+1,m},...,x_{t,m})+\gamma^Tz_{t}+\epsilon_{t}
+\end{equation}
+where:\\\\
+\hspace{1cm}
+\begin{tabular}{r@{ : }l}
+$\beta_{m}$ & Each marketing channel's coefficient\\
+$\gamma$ & The column vector of control variable coefficients\\
+$z_{t}$ & The control variables\\
+$fm(.)$ & Represents the non-linear behaviour of advertising channels
+\end{tabular}
+
+No explicit constraints are stated in the publication, but the same constraints are assumed from the Mhitarean-Cuvsinov models.
+
+The use of the function $fk(.)$ gives far more adaptability than the Mhitarean-Cuvsinov model for appropriately modelling the relationship between marketing spend and revenue. This is because various hyperparameters, such as the ones offered by saturation and adstock effects (both to be discussed in following sections) can be modelled using this function.\\
+Chen et. al (2021, p.2949) suggest a very similar model:\\
+\begin{equation}
+    y_{t}=\sum_{m=1}^{M}
+    \beta_{m}\psi_{m}(c_{m}(x_{t-l+1,m},...,x_{t,m};\alpha_m);k_m,s_m) +\sum_{j=1}^n \gamma_{j}z_{t,j}+\epsilon_{t}
+\end{equation}
+where previously used notation continues, but now adding:\\\\
+\hspace{1cm}
+\begin{tabular}{r@{ : }l}
+$\psi_{m}$ & Saturation effect\\
+$c_{m}$ & Adstock effect\\
+$\alpha$ & Decay\\
+$s$ & Shape\\
+$K$ & Half-saturation point\\
+\end{tabular}
+
+
+Note that this functional form shows that the adstock effect $s_{m}$ is a function of the marketing spends $x_{m}$ and the decay $\alpha_{m}$, whilst the saturation effect is a function of the shape $k_{m}$ and scale $\lambda_{m}$ parameters as well as the $s_{m}$ the saturation function. This is a very similar functional form to Chan and Perry's model, with more specific parameterisation included. The greater level of specificity is extremely useful and gives far clearer indication as to the relationship between adverting spend and revenue generated. 
+
+\subsection{Time Series Implications}
+
+An important requirement of an MMM project is that the company data utilised is of a time-series nature. This makes sense, given that the response variable is revenue generated across time. This aspect of the project means that time series methods and considerations will be vital when fitting the model.  
+
+Mhitarean-Cuvsinov (2017, p. 7) proposes modelling trend and seasonality components in the model, using a "classical decomposition" approach:
+
+\begin{equation}
+y_{t}=m_{t} + \delta_{it} + \epsilon_{t}
+\end{equation}
+\\\\
+where $m_{t}=$ denotes the trend component, $\delta_{it}=$ denotes the seasonal component and $\epsilon_{t}$ denotes the stationary time-series.\\
+
+The publication suggests using dummy variables to model individual seasons:
+
+\begin{equation}
+    \begin{cases}
+      1, & \text{if}\;\;t\text{ is the }i\text{'th period} \\
+      0, & \text{otherwise}
+    \end{cases}
+\end{equation}
+
+The publication also provides a useful table displaying explanations and remedies around violations of the linear regression assumption about the disturbance term (Mhitarean-Cuvsinov, 2017, Table 1, p. 13).
+
+This offers a valuable analysis and workflow, to ensure that all Ordinary Least Squares (OLS) assumptions are adhered to. This is crucial, because violating one of these assumptions could lead to misspecifying the model, resulting in false predictions on out-of-sample data. For example, if $\mathbb{E}[\epsilon_{t}] \not= 0$, and this isn’t remedied, this would lead to biased parameter estimation, meaning the model is incorrectly fit. Another example would be if $Var[\epsilon_{t}] \not= \sigma^2$, this would mean that the OLS is no longer the minimum variance estimator. Thus, T-Statistics will appear more significant than they are, leading to falsely rejecting the null. 
+
+The two aforementioned examples ($\mathbb{E}[\epsilon_{t}] = 0$ and $Var[\epsilon_{t}] = \sigma^2$), along with timeshift invariant covariance, in a time series context, form the assumption of weak stationarity. Note that strong stationarity would require for the whole statistical distribution of the process to be constant over time, however, this will not be a requirement for this project.\\\\ 
+When referring to weak stationarity, Hyndman and Athanasopoulos (2018, sec. 5.3) emphasise its importance, stating “regressing non-stationary time series can lead to spurious regressions.” The publication suggests using residual plots to test for stationarity in the process.\\\\
+Returning to Mhitarean-Cuvsinov's suggestions regarding the disturbance term, violated assumption point 3 refers to the concept of autocorrelation: $Cov (\epsilon_{t}, \epsilon_{v}) <> 0$. Hyndman and Athanasopoulos (2018) explain that when working with time series data, autocorrelation is often a problem, because the variable observed in this time period may well have the same value as the variable observed in the previous period. This would violate the OLS assumption of no autocorrelation in the errors. They suggest using autocorrelation function (ACF) plots of the residuals and Breusch-Godfrey tests in order to diagnose this issue. 
+
+Cowpertwait and Metcalfe (2008, p. 91) also suggests vigilance around this area, explaining that when correlation between errors is positive, a computer package’s output of estimated standard errors of the parameter estimates tend to be less than their true value. This could result in incorrect rejection of the null. 
+
+\subsection{Regularisation}
+
+Often in the MMM literature, regularisation is suggested. In a general context, regularisation is usually used to reduce model complexity and avoid overfitting. Equation 11 shows how the penalisation term $\lambda\sum_{m=1}^{M}\beta_{m}^2$ is added to the loss function. This whole function is then minimised with respect to $\beta$. Adding this penalty term means that "shrinkage" occurs (when the regression coefficients are shrunken towards zero). 
+
+\begin{equation}
+\hat{\beta}^{ridge} \underset{\beta}{\arg\min}\biggl\{\sum_{t=1}^{T}(y_{t}-\beta_{0}-\sum_{m=1}^{M}x_{t,m}\beta_{m})^2+\lambda\sum_{m=1}^{M}\beta^{2}_{m}\biggl\}
+\end{equation}
+
+Two popular regularisation methods are ridge and lasso. Lasso regression results in some of the coefficients being shrunk to exactly zero, whilst ridge regression will also shrink the coefficients, but none will be set to exactly zero. The reason for this disparity between the two methods can be seen more clearly from Figure 2.4. 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{Ridge Loss Function - ESL.png}
+    \caption{Recreation of graph from The Elements of Statistical Learning Hastie et al. (2009, p. 71). Shows the loss function with their constraints for lasso (left) and ridge (right) regression}.
+    \label{fig:galaxy}
+\end{figure}
+
+Notice that in Figure 2.4, when minimising the Lasso loss function (left), the loss will result in an abrupt cut-off (due to the points of the diamond-shaped constraint). Meanwhile when minimising the Ridge loss function, this abrupt cut-off does not occur. This abrupt cut-off is what leads to Lasso regression shrinking coefficients to zero. 
+
+Mhitarean-Cuvsinov (2017) tries four forms of regularisation: Ridge, Lasso, Naive Elastic Net, and Elastic Net. The publication then uses cross-validation to ascertain the best performer. Whilst testing various methods using cross-validation is a valid methodical approach, the choice of regularisation here may not be the best to suit the problem posed by measuring marketing effectiveness. This will be explained in the next paragraph. 
+
+As previously mentioned, Meta offers an open-source MMM package named Robyn. In Robyn’s technical documentation, it states that often multicollinearity can be an issue in MMM, due to many advertising channels being highly correlated (Meta, 2023). This is easily seen from the following example: If a company were to run a television advert, this may result in an increase in Google searches from the customers exposed to the advert. This may then lead to an increase in Google Search Ads spend, in order to capture this new traffic. As such, both Television spend and Google Ads spend would exhibit multicollinearity for this period. 
+
+Recall from OLS theory that the estimator $\beta=(X'X)^{-1}X'y$, and that the matrix of regressors $X$ must have full rank in order for $(X'X)^{-1}$ to exist. Multicollinearity, however, means X is not full rank, and therefore $(X'X)$ is not invertible, and therefore the estimator does not exist.
+
+Meta’s Robyn documentation states that this multicollinearity may lead to unstable coefficients, but regularisation can be used to help prevent this. When deciding between different types of regularisation, Meta suggests using Ridge as opposed to Lasso (or any other method). The reason for this preference is that Lasso can “zero-out” coefficients of the model (as previously explained). Meta points out that it is unrealistic for media channels to have zero effect, and as such, return a zero coefficient. This is because even a very small amount of spend on a channel is likely to have at least some effect on the customer’s propensity to purchase a product. 
+
+Returning to the previous discussion on uses of Naive Elastic Net, and Elastic Net in MMM, it should be noted that these two forms of regularisation both may shrink coefficients to zero (similarly to Lasso regularisation). It is for this reason that these forms of regularisation may not be suitable for MMMs. 
+
+\section{Data}
+\subsection{Data Sources}
+The project utilised four datasets. These were as follows: (1) Kaggle Bike Sales; (2) US Gross Domestic Product (GDP); (3) US Employment Rate \%; (4) US Base Rates. Below each of these datasets is discussed in-turn.
+
+\subsubsection{Kaggle Bike Sales}
+The project used a synthetic dataset located on Kaggle (Kaggle, 2022). This dataset consists of nine columns: week, sales, branded\_search\_spend, nonbranded\_search\_spend, facebook\_spend, print\_spend, ooh\_spend, tv\_spend, radio\_spend. These represent the weekly sales figures of a fictitious bicycle store, along with weekly marketing spends for seven marketing channels. 
+
+The data span across five years, and are “based on Google Trends searches for "bike" multiplied by a constant with a random fluctuation of +/- 10\%” according to the Kaggle website. See Figure 3.1, 3.2 and Table 3.1 for visualisations and descriptions of the data.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Sales in Thousands.png}
+    \caption{Kaggle weekly bike sales data, measured in $\$1000$ USD}
+    \label{fig:galaxy}
+\end{figure}
+
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=14cm]{Marketing Channel vs Spend : 100.png}
+    \caption{Each marketing channel's spend (blue) vs Kaggle weekly bike sales data, measured in $\$1000$ USD (orange)}
+    \label{fig:galaxy}
+\end{figure}
+
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{lcccc}
+        \toprule
+        & \textbf{sales} & \textbf{branded\_search} & \textbf{nonbranded\_sea} & \textbf{facebook\_spend} \\
+        \midrule
+        \textbf{Row Count} & 260 & 260 & 260 & 260 \\
+        \textbf{min} & 29,088 & 1,376 & 229 & 660 \\
+        \textbf{max} & 113,763 & 7,800 & 1,094 & 3,900 \\
+        \textbf{mean} & 68,108 & 2,034 & 402 & 1,015 \\
+        \textbf{var} & 384,506,266 & 815,341 & 40,020 & 205,250 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Descriptive statistics of Kaggle sales and marketing channel spend dataset}
+    \label{tab:summary}
+\end{table}
+
+\subsubsection{Macroeconomic Factors}
+The project utilised several macroeconomic factors as control variables for the model. Given that the Bike Sales data are derived from global Google searches, control variables used should represent the global economy. Given that the US makes up 26.11\% of the world economy  (see figure 3.3), US macroeconomic factors can be used as an appropriate proxy.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{USA vs ROW.png}
+    \caption{GDP share of each country (\%), filtered by top 10}
+    \label{fig:galaxy}
+\end{figure}
+
+The decision was made to not use seasonally adjusted macroeconomic data. This is because seasonality in the model was controlled for by using other techniques (an area discussed in more depth in later sections). The Bike Sales data source is not seasonally adjusted, meaning introducing macroeconomic factors which are seasonally adjusted would cause a discrepancy around the measurement techniques, and lead to unnecessary complications when controlling for seasonality later down the line. 
+
+All macroeconomic datasets used are located on the Federal Reserve Bank of St.Louis website, although the original sources of the datasets differ, and are explained below. The three macroeconomic data sources are described in Table 3.2.
+
+\begin{table}[h!]
+    \centering
+    \sisetup{
+        table-alignment-mode=individual,
+        table-number-alignment=center}
+    \begin{tabular}{l S S S}
+        \toprule
+        & \textbf{Base Rate} & \textbf{GDP} & \textbf{Unemployment Rate} \\
+        \midrule
+        \textbf{Row Count} & \num{60} & \num{20} & \num{60} \\
+        \textbf{min} & \num{0.05} & \text{4.96e+06} & \num{3.30} \\
+        \textbf{max} & \num{2.42} & \text{6.61e+06} & \num{14.40} \\
+        \textbf{mean} & \num{1.06} & \text{5.58e+06} & \num{4.99} \\
+        \textbf{var} & \num{0.82} & \text{2.44e+11} & \num{5.39} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Statistical statistics for macroeconomic variables. The different row counts are due to differing frequencies.}
+    \label{tab:economic_summary}
+\end{table}
+
+
+\subsection{US Gross Domestic Product (GDP)}
+The first macroeconomic factor used was US Gross Domestic Product (GDP) (Federal Reserve Bank of St. Louis, 2025). This data are measured in billions of dollars, at a quarterly frequency (see Figure 3.4). The data’s original source is the U.S. Bureau of Economic Analysis.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{GDP Graph.png}
+    \caption{USA GDP (in Billions of \$)}
+    \label{fig:galaxy}
+\end{figure}
+
+\subsection{US Unemployment Rate}
+The second macroeconomic factor used was US Unemployment Rate (Federal Reserve Bank of St. Louis, 2025). This data are measured as a percentage, and is at a monthly frequency (see Figure 3.5). As previously explained, this data are also not seasonally adjusted. It originally comes from the U.S. Bureau of Labor Statistics. 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Unemployment Rate Graph.png}
+    \caption{USA unemployment rate (\%)}
+    \label{fig:galaxy}
+\end{figure}
+
+\subsection{US Federal Funds Effective Rate
+}
+The final macroeconomic factor was US Federal Funds Effective Rate (Federal Reserve Bank of St. Louis, 2025). This is also measured as a percentage and is at a monthly frequency (see Figure 3.6). It is also not seasonally adjusted.  This dataset's original source is The Board of Governors of the Federal Reserve System (US). 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Base Rate Graph.png}
+    \caption{USA base interest rate (\%)}
+    \label{fig:galaxy}
+\end{figure}
+
+\section{Evaluation and Validation Framework}
+
+There are some key considerations relating to the evaluation of this project. A suitable evaluation and validation framework has been developed below, with the intention of accurately answering the research question. 
+
+\subsection{Train-Test Approach}
+
+It’s vital that the model should perform well on “out-of-sample” (otherwise known as “test”) data. This is to ensure that the model doesn’t overfit the data it’s trained on. Often a model can perform well on the training portion of the data, but then performs poorly on unseen data, meaning the model doesn’t generalise well to a real world scenario. Testing the model on unseen data mitigates this problem. In order to facilitate this, a Train-Test split was conducted on the data. A 75\% (train) / 25\% (test) split was adopted. It’s important to note that before any data exploration, model building or hyperparameter tuning takes place, the test portion of the data should be separated and not touched, until the final evaluation phase. This is to prevent what is known as data snooping, a situation where information taken from the test data, inadvertently influences the model-building process, which can over-inflate model performance. 
+
+\subsection{Cross-validation}
+
+As mentioned above, because the test portion of the data should be untouched during the model building process, a process known as cross-validation was used to continuously validate the performance of the model whilst it was being built. More specifically, K-Fold cross-validation will initially considered. K-Fold cross-validation works by splitting the training data into five equal folds (see figure 4.1) (James et. al, 2021). The algorithm then runs the model on four of the folds, whilst validating on the final hold-out fold. It then runs this process iteratively, holding out (and validating on) each of the five folds. This provides a robust form of cross validation because it means that every one of the five folds is used as out-of-sample data sequentially. This technique is particularly useful when tuning hyperparameters. The ability to iteratively test each hyperparameter value across multiple folds of unseen data are highly valuable. 
+
+Figure 1 demonstrates the set-up of this validation framework. Note that the Train split is the split further into five folds, shown by the bottom diagram. 
+
+\subsection{Evaluation Criteria}
+
+After the suitable validation framework was been established, an evaluation criteria (or score) was decided upon. This criteria was both used to train the model iteratively (via cross validation) and to finally evaluate the model on the unseen test data at the end of the process.
+Equation 12 shows a simplified representation of the loss function that cross-validation optimised. Recall that the constraint on the $\beta_{m}$ must be positive, because it is unreasonable to think that advertising channels will have negative effect on sales. Also note that the true loss function would be more complex, because it contains the adstock and saturation effects, as well as the macroeconomic control variables.
+
+\begin{equation}
+\hat{\beta}^{ridge} \underset{\beta}{\arg\min}\biggl\{\sum_{t=1}^{T}(y_{t}-\beta_{0}-\sum_{m=1}^{M}x_{t,m}\beta_{m})^2+\lambda\sum_{m=1}^{M}\beta^{2}_{m}\biggl\},\hspace{1cm}0 < \beta < 1
+\end{equation}
+
+For cross validation purposes, only one evaluation score was chosen as a success criteria. The final evaluation phase, however, used more than one evaluation score, in order to give a more robust review of the model’s performance. 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{Train-test Split.png}
+    \caption{Train-test split (top), with K-Fold Cross-validation (bottom)}
+    \label{fig:galaxy}
+\end{figure}
+
+The first evaluation score used to assess the performance of the model was Mean Absolute Percentage Error (MAPE):
+
+\begin{equation}
+\frac{1}{n}\sum_{i=1}^{n}\bigg | \frac{A_{i}-F_{i}}{A_{i}} \bigg | \times 100
+\end{equation}
+
+Where:\\
+$A_{i}=$ The actual value of the $ith$ observation\\
+$F_{i}=$ The forecast value of the $ith$ observation
+
+The second evaluation metric was adjusted $R^2$, denoted by $\bar{R}^2$. The reason that $R^2$ is not used, is because it will always increase (or stay the same), when a new regressor is added. This means that models with a different number of regressors can’t be compared using this metric. $\bar{R}^2$ however penalises additional regressors added to the model, especially if those regressors add no explanatory power to the model. This can be seen by comparing the two formulas below. Notice that $\bar{R}^2$ contains a negative $K$ (regressors) in the denominator, and hence as K is increased, (all else being constant) $\bar{R}^2$ will decrease. 
+
+\begin{equation}
+R^2 = 1 - \frac{SS_{residuals}}{SS_{total}}
+\end{equation}
+
+\begin{equation}
+\bar{R}^2 = 1 - \frac{SS_{residuals}/(n-K)}{SS_{total}/(n-1)}
+\end{equation}
+
+Where:
+$SS=$ Sum of Squares\\\\
+The main hyperparameters used in the model were the adstock decay rate and the saturation shape parameters. These only apply to the advertising channels, and not to the macroeconomic variables. The decision was made to keep all advertising channel regressors in the model, irrespective of performance. This was because the assumption has already been made that $0<\beta_m<1$, and thus all advertising channels have a positive effect on revenue. For this reason, no advertising channels should be excluded from the model. 
+
+\section{Methodologies and Implementation}
+
+In order to communicate each key area of the model more succinctly, the discussion on methods and methodologies, and implementation were combined. This allows for more clear grouping of the content, and saves moving back and forth between areas. Firstly, methodologies and methods are discussed around each of the five key areas identified in the Literature Review. To reiterate, these are: Model functional form; Time series implications; AdStock effects; Saturation effects; Regularisation. The chosen methods which were then utilised were the ones which were deemed to best model the relationship between a specific marketing channel’s budget spent and revenue generated (defined by the research question). With the chosen method in-place, the implementation of each method was then explained.
+
+\subsection{Hyperparameter Tuning Structure}
+
+\subsubsection{Optimisation}
+
+Before reviewing the tuning methodology, it is important to explain why hyperparameter tuning is crucial for MMM. 
+
+The model finds its optimal coefficients by minimising its loss function. Hyperparameters, however, are manual configuration settings that must be specified before this optimisation begins. While the model automatically determines the optimal parameter values when fitted to data, the optimal values for the hyperparameters must be determined beforehand through systematic tuning. 
+
+In an MMM context, these hyperparameters are critical as they define how the relationship between marketing channel spend and company sales is modelled. 
+
+The four key hyperparameters that were tuned across the model were adstock, saturation, $\lambda$ (in the ridge regression) and number of lags contained in the model. This is a multidimensional parameter space, across which the loss function should be optimised. 
+
+In order to find this optimal point, grid search can be used. This is a popular machine learning technique where each possible combination of the hyperparameter values is exhaustively tested. Note that for a large number of hyperparameters (and values), the number of possible combinations can rapidly increase. The total combinations would be represented as $\prod_{h=1}^{H}p_{i}$, where $H$ is the total number of hyperparameters, and $p$ is the number of values being tested for hyperparameter $h$.
+
+Because of this rapidly increasing number, grid search can have high computational costs. For this reason, it was decided, instead, to simply test each hyperparameter sequentially. For example, the adstock hyperparameter $\alpha$ was optimised initially, with respect to the evaluation metric. Then the winning values for $\alpha$ were fixed, before testing the next saturation hyperparameters $s$ and $K$. Then the saturation hyperparameters were optimised, before locking their values in-place and so on. Note that there is a possibility that this technique doesn’t give a global minimum across the whole parameter space. This is because, recalling that this is a multivariate parameter space, the optimal value for the whole loss function, may not necessarily be the optimal value for each hyperparameter (tested individually). This is due to possible dependencies between parameters. Nevertheless, this technique is deemed to give suitable hyperparameter values, within a small margin of error. 
+
+\subsubsection*{Channel Specific Hyperparameters}
+
+Often MMMs are optimised to return specific hyperpermeter values for each advertising channel. This is because each advertising channel will affect the consumer in very different ways. Google Search for example, is expected to have a much shorter adstock than television. This is because viewing a television advert can generally be remembered, and has a lasting impact on the consumer, long after the exposure. This is rarely the case for Google Search. 
+
+Optimising a specific hyperparameter for each advertising channel further exacerbates the problems raised in the previous section. Now, not only are there several hyperparameters that are to be optimised over a large number of possible values, but each hyperparameter needs tuning for each channel. Due to the high computational costs, this is also a problem which has to be mitigated. 
+
+Another approach utilised by some MMMs will be to simply optimise hyperparameters across all channels. This doesn’t seem prudent, however, given how differently the channels will impact the consumer. As a compromise, it was decided to split the channels into two groups: online and offline. This approach captured the major differences between channel effects. Often online (or digital) channels will have far more similarities than offline channels, so this seems like a sensible grouping. 
+
+\subsection{AdStock}
+
+\subsubsection{Methodologies and Methods}
+
+Whilst is was noted that the Weibull distributions offered significant value in modelling the relationship between a marketing channel’s budget spent and revenue generated, it was decided to use the geometric decay. One reason for this is its simplicity. As previously mentioned in the Literature Review, the fact that it contains only one parameter makes it far quicker to run. Given that there are other hyperparameters which required optimisation when fitting the model, the model’s processing speed would benefit from keeping this area simplified.
+
+Another benefit of utilising a geometric decay, as previously explained, is the ease with which it can be explained to a non-technical audience. This is hugely important when conveying the output of the model to a marketing team. 
+
+\subsubsection{Implementation}
+
+It is known that to conduct a successful MMM, both an adstock and saturation effect must be accounted for. The question remains, however, in which order these should be added to the model. Jin et. al (2017, p. 5) explains that if the media spend is concentrated in certain single time periods (with on-and-off bursts), then the adstock transformation should be applied before the saturation transformation. If, however, the cumulative spend across multiple time periods is large compared to the spend in each time period, then the saturation transformation should be applied before the adstock transformation. Referring to Figure 5.1, it can be seen that the media spends take very different patterns. However, given that four out of seven channels follow the on-and-off pattern, this was used to infer the ordering of adstock and saturation, and thus adstock was added before saturation. This hyperparameter was then optimised across its parameter space, using K-Fold cross-validation. The parameter comprised the following set $\{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9\}$.  
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Raw Marketing Channels.png}
+    \caption{Weekly marketing channel spend in in USD (\$)}
+    \label{fig:galaxy}
+\end{figure}
+
+
+As previously discussed, in an ideal world adstock and saturation would be optimised as one function (along with lags and ridge $\lambda$), but due to computational costs, these optimisations were kept separate. Recalling that the online and offline channels were given separate hyperparameters, the online channels are optimised first, before fixing these values in place. Then the offline channels were optimised, before fixing the values in-place and moving on to tuning the saturation effect. 
+
+\subsection{Saturation}
+
+\subsubsection{Methodologies and Methods}
+
+Given that every piece of MMM literature that was analysed suggested using the Hill Function to model the saturation effect, this was the function that was used. Saturation follows a very similar optimisation approach to adstock. The only difference, however, is that the function takes two parameters, the shape parameter $s_{m}$ and the half saturation point $K_{m}$. 
+
+\subsubsection{Implementation}
+
+The saturation effect was again optimised using K-Fold cross-validation. The two parameters, however, were optimised in the same programme. It would seem awkward to split this function, and optimise the parameters one by one. As alluded to in an earlier discussion, however, one drawback to optimising both these parameters together, is that of the amount of hyperparameter values returned. Similarly to adstock, saturation’s two parameters will optimise over $s$, $K$ inside of $\{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9\}$. This means that the possible combinations of hyperparameter values returned is equal to $90 (9 \times 10)$. Again, the optimal hyperparameter value was taken from the combination of $s$ and $K$ with the greatest $\bar{R}^2
+$, before fixing these in place. 
+
+\subsection{Ridge Regression}
+
+\subsubsection{Methodologies and Methods}
+
+As explained in the Literature Review section, Lasso, Elastic Net and Naive Elastic Net can all shrink regression coefficients to zero. This is not suitable for an MMM, because it is very unlikely that an advertising channel will have zero impact on revenue. For this reason, ridge regression was opted for, in favour of these other methods. 
+
+The problem of multicollinearity (and the resultant $(X’X)$ not being invertible) was explained in the Literature Review section. Multicollinearity would lead to an unstable model because if two of the regressors were highly correlated, then the model would not be able to identify how much of the effect came from either one of the variables. As such, it would assign weight arbitrarily. The correlation matrix (Figure 5.2) shows the levels of correlation between the advertising channels.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=11cm]{Correlation Matrix.png}
+    \caption{Correlation matrix of all independent variables}
+    \label{fig:galaxy}
+\end{figure}
+
+It can be seen from Figure 5.2,  that there is a perfect correlation between branded\_search\_spend and facebook\_spend. This is likely due to seasonal spends, or increases in spend due to multi-channel campaigns. There is also a significant negative correlation between base\_rate and unemployment\_rate. For this reason, ridge regression seemed very prudent to use. 
+
+Another benefit of ridge regression is its ability to help with the model overfitting. This may not become apparent when training the model (although might be shown during cross validation). However this overfitting reduction, and improving model stability was vital when coming to test the model on unseen data. Reducing overfitting during training, should lead to a better performance during the test / evaluation phase. 
+
+The $\lambda$ value in the ridge regression controls the trade-off between minimizing the residual sum of squares and the penalty given to the size of the coefficients. 
+
+The ridge regression loss function is decomposed below to demonstrate this trade-off:
+
+\begin{equation}
+\underbrace{\sum_{i=1}^{n}(x_{i} - \hat{x_{i}})^2}_{RSS} + \underbrace{\lambda \sum_{m=1}^{M}\beta_{m}^2}_{Penalty-term}.
+\end{equation}
+
+Note that when $\lambda= 0$ the 2nd term disappears, and the model only focuses on minimising the residual sum of squares, which is exactly the same as OLS.
+
+\subsubsection{Implementation}
+
+Whilst the the adstock and saturation effects were optimised, $\lambda$ (named $\alpha$ in the code) was set to 1. This was just an arbitrary number and is just used to keep $\lambda$ fixed whilst testing the other parameters. After testing and fixing the adstock and saturation parameters, the next stage was to optimise this $\lambda$ value. This hyperparameter was optimised across a different parameter space than adstock and saturation. It was optimised across values in $\{0.01, 0.1, 1, 10, 100, 1000\}$. Again, after optimising this value, it was fixed in-place into the model. 
+
+\subsection{Functional Form}
+
+\subsubsection{Methodologies and Methods}
+
+The chosen functional form is the Chen et. al (2021, p. 2949) model described below as equation 17.
+
+\begin{equation}
+    y_{t}=\sum_{m=1}^{M}
+    \beta_{m}\psi_{m}(c_{m}(x_{t-l+1,m},...,x_{t,m};\alpha_m);k_m,s_m) +\sum_{j=1}^n \gamma_{j}z_{t,j}+\epsilon_{t}
+\end{equation}
+where all the notation is explained in Chapter 2.3. As a brief summary, 
+$\gamma_j$ denotes the column vector of control variable coefficients, $z_{t}$ denotes the control variables, $\psi_{m}$ denotes the saturation effect and $c_{m}$ denotes the adstock effect.
+
+Adstock is applied first, in the presence of its hyperparameter $\alpha$, whilst saturation is applied next, in the presence of its hyperparameters $K$ and $s$. These are applied in this order for reasons explained in previous sections. 
+
+The macroeconomic effects, $z_{t}$, neither have adstock nor saturation effects. This is because they do not work in the same way as advertising channels, so do not have similar impacts on prospective consumers. 
+
+This is only the basic functional form. Additions are added in the Time series implications section, including lags and differencing. 
+
+Before proceeding, the positivity constraint $0<B_{m}<1$ should also be added to the functional form. As previously discussed, this is to ensure that media channels can only take positive effects in the model. 
+
+\subsubsection{Implementation}
+
+The chosen functional form asks that adstock be applied before saturation. This was in fact already accounted for when applying these effects (discussed in their Implementation sections). Firstly adstock effect was applied to the advertising channels, and secondly, the saturation effect was applied. 
+
+The positivity constraint $0<B_{m}<1$ was set when the model was instantiated. This means that this constraint would be accounted for during all cross validation, and that the loss function was minimised, subject to this constraint. This is the most appropriate ordering of operation, given that simply training the model and then tampering with coefficients in the final stage would lead to a completely different optimisation problem.
+\subsection{Time Series}
+
+\subsection{Stationarity}
+
+\subsubsection{Methodologies and Methods}
+
+The dangers of using non-stationary variables in a regression were outlined in the Literature Review. For a robust analysis, stationarity was identified in two main ways. The first of these was by plotting the data, and identifying signs of trend, seasonality, and structural breaks. The second was using the Augmented Dickey Fuller (ADF) test (Said and Dickey, 1984, p. 599–607). The ADF test is a regression which takes the following form:  
+\begin{equation}
+\Delta y_{t} = \alpha + \gamma y_{t-1} + \sum_{i=1}^{p}\delta_{i} \Delta y_{t-1} + \epsilon_{t}
+\end{equation}
+where:\\\\
+\hspace{1cm}
+\begin{tabular}{r@{ : }l}
+$\Delta y_{t}$ & $ y_{t} - y_{t-1}$ (First difference)\\
+$y_{t-1}$ & Lagged level (testing for unit-root)\\
+$\delta_{i}$ & Lagged difference coefficients\\
+$p$ & Number of lagged difference terms included\\
+$\epsilon_{t}$ & White noise / error term
+\end{tabular}
+
+The ADF test is testing whether the process $y_{t}$ is stationary (otherwise known as having unit-roots), by testing whether $\gamma=0$. If $\gamma<0$
+\begin{gather*}
+H_{0}: \gamma = 0, \text{(implying unit-root and non-stationarity)}\\
+H_{1}: \gamma < 1, \text{(implying no unit-root and stationarity)}
+\end{gather*}
+
+The ADF in-fact tests the value of $\rho$ which is explained below. 
+
+The original Dickey-Fuller is written as the following:
+\begin{gather*}
+y_t = \rho y_{t-1} + \epsilon_{t}
+\end{gather*}
+where $\rho$ denotes the autoregressive coefficients.\\
+Then setting $\gamma=\rho-1$ and subtracting $y_{t-1}$ from both sides, the following is achieved:
+\begin{gather*}
+\Delta y_t \quad = \quad (\rho- 1) y_{t-1} + \epsilon_{t} \quad = \quad \gamma y_{t-1} + \epsilon_{t}
+\end{gather*}
+Then if $\rho = 1$, the $(\rho-1)y_{t-1}$ disappears and $\Delta y_t = \epsilon_{t}$. Then this can be written as the following:
+\begin{gather*}
+y_{t} = y_{t-1} + \epsilon_{t}
+\end{gather*}
+Therefore when $\rho = 1$ $y_{t}$ follows a random walk, has unit-root and is not stationary. When $\rho < 1$, however, $y_{t}$ does not have unit-root and is stationary. 
+
+\subsubsection{Implementation}
+
+In order to identify signs of non-stationarity in the data, both the dependent and independent variables were reviewed. First, the dependent variable were analysed. As can be seen from Figure 5.3, the data are clearly not stationary. It exhibits what could potentially be seasonal fluctuations, as well as an at first decreasing trend (reaching its lowest point in 2019), followed by a broadly increasing trend thereafter. 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{Sales in Thousands.png}
+    \caption{Weekly bike sales data, measured in $\$1000$ USD. Clearly exhibits patterns of non-stationarity}
+    \label{fig:galaxy}
+\end{figure}
+
+The ADF test was initially run on its level form. This returns a P-value of 0.04. Given that the null hypothesis rejects at the 0.05 level, this indeed rejected. However, the plot of the data clearly show signs of non-stationarity. For this reason a first difference was taken of the data (see Figure 5.4). This then returns a P-value of 1.84 e-29 (a very small number). The rejection of the null hypothesis (that the data are non-stationary) was corroborated by the first-differenced Figure 5.4. There are indeed the occasional large fluctuations, but largely the data now seem to represent white noise, of a stationary process.  
+
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{1st Diff Sales - PACF.png}
+    \caption{Weekly 1st differenced bike sales data in USD (\$)}
+    \label{fig:galaxy}
+\end{figure}
+
+Next the independent variables were tested, again through both the use of the plots of the data and ADF tests. Table 5.1, showing outputs of the ADF test, demonstrated that nonbranded\_search\_spend, ooh\_spend and tv\_spend were non-stationary. 
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Variable} & \textbf{p-value} & \textbf{Stationary} \\
+        \midrule
+        sales & 0.044666 & TRUE \\
+        branded\_search\_spend & 0.004138 & TRUE \\
+        nonbranded\_search\_spend & 0.156159 & FALSE \\
+        facebook\_spend & 0.002210 & TRUE \\
+        print\_spend & 0.019120 & TRUE \\
+        ooh\_spend & 0.098062 & FALSE \\
+        tv\_spend & 0.256441 & FALSE \\
+        radio\_spend & 0.040885 & TRUE \\
+        \bottomrule
+    \end{tabular}
+    \caption{ADF test   for stationarity results for sales and marketing channel variables. The Stationary column indicates whether the test rejects the null at the 5\% level}
+    \label{tab:stationarity}
+\end{table}
+
+At first glance, looking at the Figure 5.5 of the independent variables, it is difficult to identify why the ADF labelled certain variables stationary and certain ones non-stationary, given that all of them appear non-stationary. Upon reviewing closer, however, an interesting pattern can be seen. This can first be demonstrated by the discrete nature of the offline media channel spends. ooh\_spend and tv\_spend states $\in\{0, 1000\}$ and $\{0, 2500\},  \; \forall \; t$, respectively, whereas radio\_spend and print\_spend $\in\{0, 2000, 3000\}$ and $\{0, 1000, 1500\} \; \forall \;t$. The latter more varying quantities show persistent mean reversion, which is what the ADF test is identifying. 
+
+A similar pattern can be seen with the continuous nature of the online channel spends. Whilst nonbranded\_search\_spend shows no particular pattern, and jumps around significantly, both branded\_search\_spend and facebook\_spend also both oscillate, but systematically revert to a long-run average (approximately 1300 and 700 respectively).  
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Raw Marketing Channels.png}
+    \caption{Marketing channel spends in USD (\$)}
+    \label{fig:galaxy}
+\end{figure}
+
+
+For this reason it was deemed that the plots and the ADF tests on the independent variables align, and therefore Nonbranded Search, radio and print were all 1st differenced. After the differencing, the ADF test was run again (see Table 5.2). The 1st differencing successfully stationarised the variables. After this, all marketing channel and response variables were deemed stationary by the ADF test. 
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{lcc}
+        \toprule
+        \textbf{Variable} & \textbf{p-value} & \textbf{Stationary} \\
+        \midrule
+        sales & 4.65e-02 & TRUE \\
+        branded\_search\_spend & 4.19e-03 & TRUE \\
+        nonbranded\_search\_spend\_diff & 1.10e-16 & TRUE \\
+        facebook\_spend & 2.24e-03 & TRUE \\
+        print\_spend & 1.93e-02 & TRUE \\
+        ooh\_spend\_diff & 6.53e-29 & TRUE \\
+        tv\_spend\_diff & 6.21e-29 & TRUE \\
+        radio\_spend & 4.13e-02 & TRUE \\
+        \bottomrule
+    \end{tabular}
+    \caption{ADF test for stationarity results for sales and marketing channel variables. Variables have been 1st differenced where necessary }
+    \label{tab:stationarity_diff}
+\end{table}
+
+\subsection{ARDL Model}
+
+\subsubsection{Methodologies and Methods}
+
+One popular method for modelling time series data are the Autoregressive Integrated Moving Average (ARIMA). The ARIMA recognises that a time series response will be affected by its lagged values. For example, GDP probably will not be a completely random process at each reading, it is far more likely to be affected by readings directly before it. One major drawback of the ARIMA, however, is that it is only suitable for univariate data. Given that this project revolves around modelling the effect of advertising channels on company sales (a multivariate problem), the ARIMA is not appropriate for this project. A more suitable approach is the Autoregressive Distributed Lag (ARDL) model, where the dependent variable is not only modelled on the independent variable, but also on the lagged versions of itself, as well as the lagged versions of the independent variables (De Boef and Keele, 2008). 
+
+This maps onto the problem of measuring marketing effectiveness very well. As explained in the Data section, three macroeconomic data sources have been identified to use as proxies for the state of the economy. It is very likely, that often there will be a lagged effect between the economy and company sales. For example, the USA may enter recession, GDP decreases, consumer spending decreases, and thus company sales decreases. Of course, this effect may take time to propagate through the economy. As such, adding lagged versions of the macroeconomic variables in the model is vital. Note that a similar more nuanced carry over effect (in adstock) was already been added to the advertising channels, so those variables do not not apply to this area. 
+
+Returning to the discussion of the ARDL model, a representation of this is shown below:
+
+\begin{equation}
+y_{t} = \alpha + \sum_{i=1}^{p}\phi_{i}y_{t-i} + \sum_{j=0}^{q1}\gamma_{1,j}z_{1,t-j} +
+\sum_{j=0}^{q2}\gamma_{2,j}z_{2,t-j} +
+\sum_{j=0}^{q3}\gamma_{3,j}z_{3,t-j} + 
+\epsilon_{t}
+\end{equation}
+
+where:
+
+\hspace{1cm}
+\begin{tabular}{r@{ : }l}
+$y_t$ & Sales \\
+$\alpha$ & Intercept \\
+$p$ & Number of lags of $y$ included in the model \\
+$q_o$ & Number of lags corresponding to the $o^{th}$ macroeconomic variable \\
+$z_{o,t}$ & $o^{th}$ macroeconomic variable at time $t$ \\
+$\phi_i$ & Lagged $y$ coefficient \\
+$\gamma_{o,j}$ & Lagged macroeconomic variable coefficients \\
+$\varepsilon_t$ & Error term / white noise
+\end{tabular}
+
+
+One key ARDL assumption is that the data must be one of the following:
+
+I(0) (stationary in levels)\\
+I(1) (stationary in first differences)\\
+A mix of both I(0) and I(1) variables
+
+As previously the dependent variable was found to be stationary at first difference, or I(1). This means that this assumption has been adhered to. 
+
+\subsubsection{Implementation}
+
+The first step of the ARDL process is to identify how much lagging should be used for the dependent and independent variables. This was done using two methods: (1) Autocorrelation Functions (2) Akaike information criterion (AIC). 
+
+\subsubsection*{PACF}
+
+Rather than using the autocorrelation (ACF) function itself, the decision was made to use the partial autocorrelation (PACF). For a stationary process ${yt}$, the PACF at lag $u$, $\phi_{uu}$ was given by the correlation between $y_{t}$ and $y_{t-u}$ when the intervening variables $y_{t-1}, y_{t-2},...,y_{t-u+1}$ are held constant. This technique of holding the intervening random variables constant, is more clearly represented using equation 20.
+
+\begin{equation}
+\boxed{y_{t-u}}, y_{t-u+1}, ..., y_{t-3}, y_{t-2}, y_{t-1}, \boxed{y_{t}}
+\end{equation}
+
+Because the ACF does not hold these intervening variables constant, it can mean that there is a transition process between variables, leading to both direct and indirect correlations through the intermediate periods. PACF’s adjusted for the intervening periods solves this issue, allowing for an easier identification as to which lags are having a direct effect on $y_{t}$.
+
+The PACF can be used to identify which of lags in the dependent variables in the regression are having direct effects on the response (company sales). One important requirement of the PACF is that the random process used must already be stationary. Fortunately, this had already been established, by taking the first difference. Figure 5.6 shows the PACF of this first differenced series.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{1st Diff Sales - PACF.png}
+    \caption{PACF plot of the 1st differenced sales data}
+    \label{fig:galaxy}
+\end{figure}
+
+Note that the PACF at lag 0 (denoted by $\phi_{00}$)  is always 1. This is because the correlation of any variable with itself, $Cor(y_{t}, y_{t}) \equiv 1$. For this reason, the $\phi_{00}$ has been excluded in the diagram above. 
+
+As can be seen from the PACF plot, there were fairly significant lags at both lag 5 and lag 13. As such the ARDL model at first glance should contain an $AR(5)$ and an $AR(13)$ component. This was then validated, using the AIC. 
+\newpage
+\subsubsection*{Akaike information criterion (AIC)}
+
+The AIC is defined as the following:
+
+\begin{equation}
+-2 \text{ maximised log-likelihood } + 2k
+\end{equation}
+
+Where $k$ denotes the number of parameters in the model.
+
+Notice that the maximised log-likelihood appears in the expression. Maximising the log-likelihood is a far easier calculation than maximising the likelihood. The reason these two can be used interchangeably is because the log transformation is a monotonically increasing transformation. This means that the maximum point of the curve remains the same, despite the shape of the curve changing. 
+
+This appearance of the maximised log-likelihood in the AIC expression will cause complications for the ridge regression. The ridge regression minimises its loss function given in equation 22. An OLS model will do this as well (by simply minimising its sum of squares), but it will also simultaneously maximise a probability function. The OLS assumes that the errors of the model are normally distributed, and identifies the line which makes the observed data most probable. Because of the ridge regression’s penalty term, the coefficients returned by the ridge model will actually be biased. This means that the maximum likelihood estimate cannot be returned for the ridge regression. 
+
+
+\begin{equation}
+\sum_{t=1}^{T}(y_{t}-\beta_{0}-\sum_{m=1}^{M}x_{t,m}\beta_{m})^2+\lambda\sum_{m=1}^{M}\beta^{2}_{m}
+\end{equation}
+
+
+Theoretically this problem means that the ridge regression and AIC are incompatible. To workaround this issue, however, it was decided to simply use the AIC on an OLS model. The preferred model (as quantified by AIC) was then set up as a ridge regression. 
+
+One method of testing which lagged macroeconomic variables should be added to the model, is by testing every combination of the variables up to a certain number of lags. The major drawback of this technique, is that the project uses 3 macroeconomic variables. A maximum number of lags should be at least 10 (weeks), because it can take at least a couple of months for effects to propagate through the economy. This means that there are a total possible combination of $2^n (2^{30})$ models. In order to test each of these exhaustively, a huge amount of computational cost would be required. 
+
+\subsubsection*{Vector Autoregression (VAR)}
+
+As an alternative to exhaustive search, it was decided to use another approach named vector autoregression (VAR). This model assumes that there are dynamic feedback loops between each other. So for example whilst GDP may affect sales, sales may also affect GDP (which makes perfect sense). This means that all variables are treated exogenously, and as such, the VAR can be written in as the system of simultaneous equations. This system is then used to solve for the optimal number of lags. 
+\begin{align}
+\begin{pmatrix}
+y_{t}\\
+z_{1,t}\\
+z_{2,t}\\
+z_{3,t}\\
+\end{pmatrix}
+&=
+\begin{pmatrix}
+c_{1}\\
+c_{2}\\
+c_{3}\\
+c_{4}\\
+\end{pmatrix}
++
+\begin{pmatrix}
+\alpha_{1,1} & \beta_{1,1} & \gamma_{1,1} & \delta_{1,1}\\
+\alpha_{2,1} & \beta_{2,1} & \gamma_{2,1} & \delta_{2,1}\\
+\alpha_{3,1} & \beta_{3,1} & \gamma_{3,1} & \delta_{3,1}\\
+\alpha_{4,1} & \beta_{4,1} & \gamma_{4,1} & \delta_{4,1}
+\end{pmatrix}
+\begin{pmatrix}
+y_{t-1}\\
+z_{1,t-1}\\
+z_{2,t-1}\\
+z_{3,t-1}\\
+\end{pmatrix} \nonumber \\
+&\quad + \cdots + \begin{pmatrix}
+\alpha_{1,p} & \beta_{1,1} & \gamma_{1,p} & \delta_{1,1}\\
+\alpha_{2,p} & \beta_{2,1} & \gamma_{2,p} & \delta_{2,1}\\
+\alpha_{3,p} & \beta_{3,1} & \gamma_{3,p} & \delta_{3,1}\\
+\alpha_{4,p} & \beta_{4,1} & \gamma_{4,p} & \delta_{4,1}
+\end{pmatrix}
+\begin{pmatrix}
+y_{t-p}\\
+z_{1,t-p}\\
+z_{2,t-p}\\
+z_{3,t-p}\\
+\end{pmatrix} 
++
+\begin{pmatrix}
+\epsilon_{1,t}\\
+\epsilon_{2,t}\\
+\epsilon_{3,t}\\
+\epsilon_{4,t}\\
+\end{pmatrix}
+\end{align}
+
+Note that this model gives all $o+1$ variables the same number of lags. This is why the index $p$ has been used. This diverges from the notation used in the ARDL model, where the number of $y$ lagged variables was denoted by $p$ and the number of Macroeconomic variables was denoted by $q_{o}$
+
+As explained above, the macroeconomic variables (along with the sales variable) were used in the VAR AIC set-up. For simplicity, a similar approach was used to that in the hyperparameter tuning. Given that this particular technique only utilised the macroeconomic variables (and not the advertising channel variables), the advertising channel variables were simply be left out of this part of the model. 
+
+The maximum lag length on the macroeconomic variables were set to 10. Then each lag length was iterated over, before fitting a separate VAR model. Then for each of these models (representing one lag length, from 1 to 10) the AIC was calculated. The model with the minimum AIC was then selected. 
+
+One drawback of using this method, in favour of an exhaustive approach, is that it assumes that the lag effect between the independent variables and sales is all the same. So for example if GDP takes 8 weeks to have an effect on company sales, then so does unemployment rate. Of course, in reality the three macroeconomic variables (GDP, unemployment rate and interest rate) will all have very different lag effects. This is because they will take differing amounts of time to propagate through the economy, into having an effect on company sales. Nevertheless the saving on computational cost of this method is substantial, and therefore it is the preferred method. These macroeconomic variable lags were combined with the response variable lags identified using the PACF.
+
+
+\section{Testing and Evaluation}
+
+This section shows outputs of the tests explained in the previous section, outputs and scores of the models, and discusses why certain modelling decisions were made. This section starts with this discussion revolving around the cross-validation, and model optimisation process. It then moves onto a review of how the final chosen model actually performed on the out-of-sample test data. 
+
+\subsection{Baseline Model}
+
+Before moving on to model optimisation and tuning, it was important to gauge how well a baseline model performs. In order to facilitate this, all features in the bike sales dataset were used on a ridge regression with $\alpha$ = 1. This produced an $\bar{R}^2$ of 0.6182. This seems like a promising start, particularly in the remit of MMM, which requires modelling relationships of marketing datasets, which often have low signal-to-noise ratios. 
+
+On second glance, however, this relatively strong $\bar{R}^2$ required further investigation. In the Methodologies and Implementation section, the evaluation framework consisted of using a train-test split approach, coupled with K-Fold Cross Validation. This approach is perfect for working with cross-sectional data. Time series data, however, has a natural order to it. K-Fold Cross Validation requires shuffling the data randomly, before making the folds. When dealing with naturally ordered time series data, this could result in the model training on data at the end of the sequence (in 2022 for example in this situation), and being validated on data at the beginning of the sequence (in 2017 for example). This will in-fact introduce a form of data-leakage, and mean that the model training process is learning from the data it’s being used to validate on. 
+
+As an alternative to the popular K-Fold method, a simple holdout technique was opted for in its place. This technique used the last 26 weeks in the training dataset as a holdout, which was validated on during the training phase of the model building process. This course lost the benefit of K-Fold iteratively training (and validating on) rotating folds of the data. However, this was deemed as a small price to pay, to remove a significant data leakage problem. 
+
+Using this alternative time series holdout validation process, the baseline model was rerun, iteratively adding variables to the model. The exact regressors are shown in the appendix (Table A.5. The $\bar{R}^2$ have been visualised in Table 6.1 and Figure 6.1. 
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l S[table-format=-1.4]}
+        \toprule
+        \textbf{Number of Variables} & {$\mathbf{\bar{R}^2}$} \\
+        \midrule
+        1 & \num{-0.2957} \\
+        2 & \num{0.0563} \\
+        3 & \num{-0.0099} \\
+        4 & \num{0.2642} \\
+        5 & \num{0.2132} \\
+        6 & \num{0.1017} \\
+        7 & \num{-0.4588} \\
+        \bottomrule
+    \end{tabular}
+
+    \caption{$\bar{R}^2$ values for different baseline regression models. The variables are added in this order incrementally: branded search, nonbranded search, facebook, print, ooh, tv, radio}
+    \label{tab:model_comparison}
+\end{table}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Baseline Model - R2.png}
+    \caption{$\bar{R}^2$ values for different baseline regression models. The variables are added in this order incrementally: branded search, nonbranded search, facebook, print, ooh, tv, radio}
+    \label{fig:galaxy}
+\end{figure}
+
+At this stage, the model which performed the best was the 2 variable model. $\bar{R}^2$ decreases significantly when adding tv\_spend, and then even more sharply after introducing radio\_spend. Upon analysing the data more closely, this starts to make sense. 91\% of weeks have 0 tv\_spend, whilst 72\% of weeks have 0 radio\_spend. The model was likely struggling to find significant signal in these features. Given this evidence, it seemed prudent to leave these variables out of the model. Note that it was still a sensible decision to use Ridge regression, in order to be able to adequately test these additional variables methodically, as opposed to potentially instantly shrinking them to zero with lasso or another form of regularisation. This decision will be discussed in greater depth in Discussion Chapter.
+
+\subsection{Stationarising Variables}
+
+After establishing the baseline model, a model was run using a first differenced response, along with a mixture of level and first differenced features. The features which were first differenced, were the ones which were identified to be I(1) in the Methodologies and Implementation section. These were nonbranded\_search\_spend, ooh\_spend and tv\_spend. As can be seen from Table 6.2 and Figure 6.2, the $\bar{R}^2$ was drastically reduced from making these variables stationary. Note that the optimal amount of features using this method is in fact the 1 variable model, and even this returns a negative $\bar{R}^2$. This means even the best model, using this technique, explained less of the data’s variance than just predicting the mean of regressors. 
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l S[table-format=-1.4]}
+        \toprule
+        \textbf{Number of Variables} & {$\mathbf{\bar{R}^2}$} \\
+        \midrule
+        1 & \num{-0.0498} \\
+        2 & \num{-0.0955} \\
+        3 & \num{-0.1511} \\
+        4 & \num{-0.2004} \\
+        5 & \num{-0.2604} \\
+        6 & \num{-0.3168} \\
+        7 & \num{-0.3900} \\
+        \bottomrule
+    \end{tabular}
+
+    \caption{$\bar{R}^2$ values for different baseline regression models. The variables have all been made (or found to be) stationary. The variables are added in this order incrementally: branded search, nonbranded search, facebook, print, ooh, tv, radio.}
+    \label{tab:model_comparison}
+\end{table}
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Stationary Model - R2.png}
+    \caption{$\bar{R}^2$ values for different baseline regression models. The variables have all been made (or found to be) stationary. The variables are added in this order incrementally: branded search, nonbranded search, facebook, print, ooh, tv, radio.}
+    \label{fig:galaxy}
+\end{figure}
+
+This seems like a good time to recall the warning from Hyndman and Athanasopoulos (2018, sec. 5.3), around spurious regressions due to non-stationary time series, and give it some consideration. It could be posited that this huge drop in $\bar{R}^2$ after stationarising the variables, was in-fact the true $\bar{R}^2$, and the previous stronger one was simply over-inflated. This can be explained in the following way: if two variables both exhibit steady upward trends, say GDP and the S\&P 500 for example, regressing one on the other would likely return a strong $R^2$, and statistically significant T-statistics. This doesn’t necessarily mean that the variables are related, however. Their upward trends may just be a function of time. This could certainly be the effect that was being presented by this significant drop in $\bar{R}^2$, after stationarising the variables. 
+
+\subsection{Analysing the Regression Residuals}
+
+As well as reviewing the stationarity of the variables, it was important to also review the stationarity of the regression residuals. Given that the best model up until this point was the baseline model with only 4 variables, it was this model’s residuals that were plotted (See figure 6.3). These plots also allowed for reviewing whether the residuals were $NID (0, \sigma^2 )$, another important regression assumption. 
+
+For OLS, under the null hypothesis the coefficient test statistics form T-distributions, in-part due to the assumption that the errors are $NID (0, \sigma^2 )$. This is why T-Statistics and p-values can be used for hypothesis testing of the coefficients. The ridge regression, however, introduces bias into the model, meaning the coefficients no longer form T-distributions, under the null. As such, the coefficient T statistics and p-values should not be reported on for a ridge regression, and more generally statistical inference for a ridge regression should be conducted with caution. Ridge regression is, however, well suited for prediction, which is appropriate for how an MMM would be used in industry. The model would be deployed with the objective of predicting how a unit change in a given marketing channel’s budget would result in a change in revenue. 
+
+Despite T-statistics and p-values of the coefficients not being appropriate to report on, in a ridge regression scenario, however, the assumption that the errors are $NID (0, \sigma^2 )$ should still be adhered to. Diverging from this assumption could mean that the model is misspecified, or predictions from the model are inherently biased, due to some systematic patterns in the data that the model hasn’t accounted for. For this reason, in Figure 6.3, the residuals should be both stationary and $NID (0, \sigma^2 )$.
+
+The residual plots (Figure 6.3) will now be discussed in turn. The residuals over time plot (top left), demonstrated that the residuals did not form any very significant systematic pattern. Aside from  relatively large positive and negative outliers at the end of 2020 and the start of 2021, the residuals seem to largely follow this $NID (0, \sigma^2 )$ distribution throughout the series, meaning that the series appears stationary.  
+
+If the ACF plot shows the autocorrelations exhibiting a geometric decay towards zero, and then oscillating around 0, within the confidence interval (blue area), then this suggests a stationary process. All lags after 6 are within the blues area, meaning no autocorrelations $>6$ are statistically significant, which is consistent with a stationary process. 
+
+The PACF plot (bottom left) does show a sharp drop to 0, before moving around 0 with no systematic pattern (all signs of stationarity). As previously mentioned, the PACF at $\phi_{00}$  will always equal 1. The main concern with this plot, however, is the fact that $\phi_{11} = 0.75$. This suggests that there may be strong autocorrelation between the process and its first lag.
+
+Finally, whilst the distribution of the residuals plot (bottom right) does almost show signs of a bimodal distribution (with the dip on the right-centre), on the whole the residuals do indeed appear $NID (0, \sigma^2 )$. As such, there doesn’t seem to be any significant cause for concern regarding this plot.
+
+In summary, the residuals over time, the ACF and the distribution of the residuals all show the residuals to be $NID (0, \sigma^2 )$ and to represent a stationary process. This was then used to support that the unobserved errors also follow this form.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=14cm]{Regression Residuals Plot.png}
+    \caption{Residual plots for regression model}
+    \label{fig:galaxy}
+\end{figure}
+
+\subsection{Cointegration}
+Recall that the model run previously, using only I(0) and first-differenced variables performed much poorer than the baseline model. This could point to cointegration, an effect where there is a long-run relationship between non-stationary variables. Cointegration means that the spread (the difference between two variables) is stationary in the long-run (Wooldridge, 2012, p. 632). When the variables were made stationary themselves, however, (by differencing) this long-run relationship between the variables may have been destroyed, meaning that all that remained was short-term white-noise fluctuations. This white-noise signal wouldn’t contain any meaningful signal that the model can use. This would therefore decrease the model’s performance and its adjusted $R^2$. 
+
+\subsection{AR(1) Process}
+Figure 6.4 of the PACF of the response variable, helps explain the significant spike at  $\phi_{11}$ shown by the PACF plot of the regression residuals. This response PACF plot shows that there is also a very high value for $\phi_{11}$. This could indicate that the response exhibits the characteristics of an $AR(1)$ process. Note that the PACF plots of the independent variables shouldn’t be used in this way, because that would merely show how those processes are autocorrelated with themselves, and won’t give any meaningful information as to how they affect the response. 
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=13cm]{Raw sales - PACF.png}
+    \caption{PACF plot of sales data}
+    \label{fig:galaxy}
+\end{figure}
+
+
+The fact that the response clearly showed strong autocorrelation with its first lag was vital information. This supported the use of adding an $AR(1)$ process to the model. This (and the introduction of lagged independent variables) will be discussed in greater depth in a subsequent sub-section. The next sections will leave this issue of autocorrelation briefly to one side, whilst the advertising channel hyperparameters are optimised. 
+
+\subsection{AdStock Transformation}
+
+As explained in the Methods and Methodologies section, the adstock transformation was applied first to the online advertising channels, and then to the offline advertising channels. The parameter used to optimise the decay rate $\alpha$ that resides in the set $\{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9\}$. Recall that the optimal baseline model used 4 features and achieved an $\bar{R}^2 = 0.2642$. The 5th and 6th and 7th feature, ooh\_spend, tv\_spend, radio\_spend (respectively) actually brought down the $\bar{R}^2$. One important point to consider, however, was that at this time, it was not yet known how these offline variables would perform after being given adstock transformations. In advertising, very often, offline channels (such as OOH (out-of-home), TV and Radio, are considered to have a longer lasting effect on the consumer. When compared to channels like Google Search or Facebook Ads, for example, a consumer is far more likely to remember being exposed to an advert days (or even weeks) later. As such, the adstock decay rate may well have an effect on how well these channels are able to predict the response company sales. Therefore the four confirmed features (which optimise the baseline model) were used, but the additional 3 features were also tested, whilst optimising the adstock decay rate parameter. 
+
+The hyperparameter $\alpha$ was tested against each value in the parameter space, whilst also testing different numbers of features in the model. The table 6.3 shows the combination of $\alpha$ value and number of features. Interestingly, the optimal model was again the 4 feature model, but this time with a decay rate of $\alpha = 0.9$ added to the online channels. Reassuringly, the $\bar{R}^2$ increased significantly to 0.4117. 
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c|cccc}
+        \toprule
+        \textbf{Adstock Decay Rate} & \textbf{4 Variables} & \textbf{5 Variables} & \textbf{6 Variables} & \textbf{7 Variables} \\
+        \midrule
+        0.1 & 0.0105 & -0.0389 & -0.2224 & -0.9148 \\
+        0.2 & 0.0521 & 0.0048 & -0.1743 & -0.8157 \\
+        0.3 & 0.0924 & 0.0470 & -0.1258 & -0.7103 \\
+        0.4 & 0.1336 & 0.0903 & -0.0761 & -0.5967 \\
+        0.5 & 0.1779 & 0.1368 & -0.0240 & -0.4723 \\
+        0.6 & 0.2316 & 0.1932 & 0.0391 & -0.3293 \\
+        0.7 & 0.3053 & 0.2706 & 0.1247 & -0.1575 \\
+        0.8 & 0.4040 & 0.3742 & 0.2329 & 0.0417 \\
+        0.9 & 0.4117 & 0.3823 & 0.2052 & 0.0881 \\
+        \bottomrule
+    \end{tabular}
+
+    \caption{$\bar{R}^2$
+whilst hyperparameter-tuning adstock decay rate, for online channels}
+    \label{tab:adstock_r2}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c|cccc}
+        \toprule
+        \textbf{Adstock Decay Rate} & \textbf{4 Variables} & \textbf{5 Variables} & \textbf{6 Variables} & \textbf{7 Variables} \\
+        \midrule
+        0.1 & 0.4040 & 0.3742 & 0.2351 & 0.0456 \\
+        0.2 & 0.4040 & 0.3742 & 0.2379 & 0.0502 \\
+        0.3 & 0.4040 & 0.3742 & 0.2421 & 0.0550 \\
+        0.4 & 0.4040 & 0.3742 & 0.2482 & 0.0610 \\
+        0.5 & 0.4040 & 0.3742 & 0.2564 & 0.0639 \\
+        0.6 & 0.4040 & 0.3742 & 0.2677 & 0.0667 \\
+        0.7 & 0.4040 & 0.3742 & 0.2849 & 0.0707 \\
+        0.8 & 0.4043 & 0.3746 & 0.3072 & 0.0819 \\
+        0.9 & 0.4049 & 0.3752 & 0.3315 & 0.0962 \\
+        \bottomrule
+    \end{tabular}
+
+    \caption{$\bar{R}^2$
+whilst hyperparameter-tuning adstock decay rate, for offline channels}
+    \label{tab:adstock_r2}
+\end{table}
+
+
+Next, this score of 0.9 was fixed across the online advertising features, before running a similar test across the offline channels. The outcome of this test can be seen in the Table 6.4. Interestingly, testing the hyperparameter $\alpha$ for the offline channels did not improve the model whatsoever. This means that the optimal model at this point contained 4 features, with an adstock transformation of $\alpha = 0.9$ applied to the online channels. Whilst the expectation was that applying adstock to these offline channels would have a greater positive effect on the model, than applying it to online channels (due to the expected longer-lasting effects on consumers), in truth, increasing levels of $\alpha$ on offline channels actually yielded a weaker model. 
+
+
+\subsection{Saturation Transformation}
+
+As discussed in the methods and methodologies section, after applying adstock, the saturation optimisation process was conducted. Its 2 hyperparameters $s$ and $K$ were tuned across their parameter space $\{0.1, 0.2, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9\}$. Before this took place, the adstock transformation was applied, fixing the value of $\alpha = 0.9$ to the online channels. In order to optimise the saturation effect, the $s$ and $K$ hyperparameters were applied simultaneously. In contrast to the hyperparameter-tuning which was applied to adstock, this process did optimise a multivariate function, and therefore did take into account dependencies between the two hyperparameters. However, in order to reduce computational cost, a similar approach of splitting online and offline channels was adopted. 
+
+The output of the saturation optimisation is shown by Table 6.5 and 6.6. Interestingly, none of the hyperparameter combinations of $s$ and $K$, for either online nor offline channels, yielded a stronger model than the previously obtained $\bar{R}^2$
+ of 0.4117.
+
+Furthermore the offline channel test actually yielded the same value (0.4102) for the whole parameter space. This could indicate that this parameter space is not optimal for these hyperparameters. Despite this, however, in order to maintain consistency with the online test, the parameter space should not be enlarged in light of this new evidence. Given that the saturated transformation failed to beat the previous $\bar{R}^2$
+ of 0.4117, the previous model is moved forwards, without any kind of saturation effect added.
+
+ \begin{table}[h!]
+    \centering
+    \begin{tabular}{c|ccccccccc}
+        \toprule
+        \textbf{K $\backslash$ s} & \textbf{0.1} & \textbf{0.2} & \textbf{0.3} & \textbf{0.4} & \textbf{0.5} & \textbf{0.6} & \textbf{0.7} & \textbf{0.8} & \textbf{0.9} \\
+        \midrule
+        0.1 & 0.0047 & -0.1031 & -0.1998 & -0.2746 & -0.3647 & -0.4313 & -0.4594 & -0.4198 & -0.4926 \\
+        0.2 & 0.0067 & -0.1000 & -0.1968 & -0.2723 & -0.3654 & -0.4307 & -0.4592 & -0.4197 & -0.4925 \\
+        0.3 & 0.0079 & -0.0979 & -0.1948 & -0.2706 & -0.3644 & -0.4302 & -0.4591 & -0.4196 & -0.4925 \\
+        0.4 & 0.0087 & -0.0964 & -0.1932 & -0.2693 & -0.3635 & -0.4297 & -0.4590 & -0.4195 & -0.4924 \\
+        0.5 & 0.0094 & -0.0952 & -0.1918 & -0.2681 & -0.3628 & -0.4293 & -0.4589 & -0.4195 & -0.4924 \\
+        0.6 & 0.0099 & -0.0941 & -0.1907 & -0.2670 & -0.3621 & -0.4290 & -0.4588 & -0.4194 & -0.4923 \\
+        0.7 & 0.0104 & -0.0933 & -0.1897 & -0.2661 & -0.3615 & -0.4286 & -0.4587 & -0.4193 & -0.4923 \\
+        0.8 & 0.0108 & -0.0925 & -0.1888 & -0.2652 & -0.3609 & -0.4283 & -0.4586 & -0.4192 & -0.4923 \\
+        0.9 & 0.0112 & -0.0917 & -0.1879 & -0.2645 & -0.3604 & -0.4280 & -0.4585 & -0.4192 & -0.4922 \\
+        \bottomrule
+    \end{tabular}
+
+    \caption{$\bar{R}^2$
+ whilst hyperparameter-tuning saturation's $s$ and $K$. Values of $s$ run along the left-hand column, whilst values of $K$ run along the top row. Online channels are optimised, whilst offline channels remain fixed.}
+    \label{tab:s_k_r2}
+\end{table}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c|ccccccccc}
+        \toprule
+        \textbf{K $\backslash$ s} & \textbf{0.1} & \textbf{0.2} & \textbf{0.3} & \textbf{0.4} & \textbf{0.5} & \textbf{0.6} & \textbf{0.7} & \textbf{0.8} & \textbf{0.9} \\
+        \midrule
+        0.1 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.2 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.3 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.4 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.5 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.6 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.7 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.8 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        0.9 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 & 0.4102 \\
+        \bottomrule
+    \end{tabular}
+
+    \caption{$\bar{R}^2$
+ whilst hyperparameter-tuning saturation's $s$ and $K$. Values of $s$ run along the left-hand column, whilst values of $K$ run along the top row. Online channels are optimised, whilst online channels remain fixed.}
+    \label{tab:s_k_r2_full}
+\end{table}
+
+
+\subsection{AIC}
+
+Recall that the PACF plots utilised earlier on in the Evaluation section demonstrated that there may be an autocorrelation lag 1 problem with both the regression and the response variable. These plots suggested that the model could benefit greatly from an $AR(1)$ process addition. However, there could also have been independent variable lags that the model could have also benefited from. Because the adstock effect was already modelling the decay effect of the advertising channels, lagged variables were only considered for the 3 macroeconomic variables. The VAR model was used in conjunction with the AIC to identify a suitable order of lags to be used in the model. As previously explained in the Methods and Methodologies section, the VAR tested for the same number of lags for all variables. As shown from the VAR test in Table 6.7, the optimal number of lags  (measured by the lowest AIC) was 1, returning an AIC score of 86.94 (see Table 6.7). Recall the PACF plot of the response variable (see Figure 6.4) and its spike at $\phi_{11} = 0.75$. It was suspected that, based on this diagnosis, an $AR(1)$ process fitted the model well, and the VAR test supported this theory. Note that the number of lags for each macroeconomic variable were not tested separately, so the VAR model assumed that the number of lags for each of these variables and the response was of the same number. 
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{lc}
+        \toprule
+        \textbf{Number of Lags} & \textbf{AIC} \\
+        \midrule
+        0  & 104.50 \\
+        1  & 86.94* \\
+        2  & 87.36 \\
+        3  & 87.90 \\
+        4  & 88.33 \\
+        5  & 88.69 \\
+        6  & 87.98 \\
+        7  & 88.07 \\
+        8  & 88.30 \\
+        9  & 87.69 \\
+        10 & 87.70 \\
+        \bottomrule
+    \end{tabular}
+    \caption{AIC values for different numbers of lags. Asterisk (*) denotes the number of lags with minimum AIC. These values are found using a VAR model.}
+    \label{tab:lag_aic}
+\end{table}
+
+
+\subsection{ARDL Model}
+
+Using this valuable insight that the macroecoonomic variables and the response should be given lag 1’s, the ARDL model is built. The following vector represents the variables now included in the feature set (in order):  
+
+\begin{equation}
+\begin{pmatrix}
+sales\_lag\_1\\
+branded\_search\_spend\_adstock\\
+nonbranded\_search\_spend\_adstock\\
+facebook\_spend\_adstock\\
+print\_spend\\
+gdp\_lag\\ 
+base\_rate\\ 
+unemployment\\
+gdp\_lag\_1\\ 
+base\_rate\_lag\_1\\ 
+unemployment\_rate\_lag\_1
+\end{pmatrix}
+\end{equation}
+
+
+The lagged response (sales\_lag\_1) was added as the first feature. This was because, based off the evidence obtained throughout this study, it was expected to have a strong impact on the model. Following this, the 4 advertising channels that were previously established as the strongest predictors of sales were added. Then finally the macroeconomic variables were added, followed by their lagged variables. After running this as a regression the $\bar{R}^2$ of 0.5814 was returned. This was a significant improvement on all models so far, showing that adding the macroeconomic variables had an extremely positive effect on the model. 
+
+\subsection{Ridge Regression}
+
+Before validating the final model, one last optimisation process was conducted on the $\lambda$ from the ridge regression. Note that it was important to conduct, after adding the macroeconomic variables (and their lags), because $\lambda$ would affect the coefficients on all variables (not just marketing channels). 
+
+This was a slightly simpler process than optimising the adstock and saturation effects, because the optimal amount of features for the model had now been established. The vector of regressors described above (24) was used to test $\lambda$. The outputs of the test were shown in Table 6.8. The optimal value of $\lambda$ is shown to be 10 with an $\bar{R}^2$ of 59.70. For this reason, $\lambda$ was fixed at 10 in the following models.
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{lc}
+        \toprule
+        \textbf{$\lambda$} & \textbf{$\bar{R}^2$} \\
+        \midrule
+        0     & 0.5784 \\
+        0.01  & 0.5784 \\
+        0.1   & 0.5787 \\
+        1     & 0.5809 \\
+        10    & 0.5970 \\
+        100   & 0.4317 \\
+        1000  & -0.2797 \\
+        \bottomrule
+    \end{tabular}
+    \caption{$\bar{R}^2$ values for different values of $\lambda$ when optimising ridge regression}
+    \label{tab:lambda_r2}
+\end{table}
+
+\subsection{Cross-validating the Final Model}
+All the optimal values were then brought together into the ARDL model, whilst testing which final regressors should be used. Again, equation 24 describes the vector of regressors that were tested. 
+Note that the ordering of these variables is important, because the model was run iteratively, on an increasing number of features (the first model contained the 1st feature, the 2nd model contained the 1st and 2nd feature and so on). It was this reason that the lagged response and the advertising channels were placed first in the process. It was expected that due to the penalty that $\bar{R}^2$ gave to a higher number of features, there would be a point at which the model started to deteriorate. For this reason, it was important to use the features expected to have a positive impact first. This problem could of course be resolved by testing every feature combination iteratively, but as explained before these combinations can quickly yield hugely expensive computations. 
+
+Table 6.9 shows the performance of this ARDL model. Interestingly the model with only 2 features performed the strongest (in terms of $\bar{R}^2$). These features were sales lag 1 and branded search spend adstock, achieving an impressive $\bar{R}^2$ of 0.7818. This certainly vindicated the decision to add an $AR(1)$ process to the model, but also highlighted the fact that additional advertising channels (and macroeconomic variables) offered no additional signal to the model this time. 
+
+\begin{table}[h!]
+    \centering
+\begin{tabular}{lc}
+    \toprule
+    \textbf{Number of Features} & \textbf{$\bar{R}^2$} \\
+    \midrule
+    1  & 0.7508 \\
+    2  & 0.7818 \\
+    3  & 0.7487 \\
+    4  & 0.7368 \\
+    5  & 0.7236 \\
+    6  & 0.7100 \\
+    7  & 0.6939 \\
+    8  & 0.6759 \\
+    9  & 0.6684 \\
+    10 & 0.6463 \\
+    11 & 0.6211 \\
+    \bottomrule
+\end{tabular}
+    \caption{$\bar{R}^2$
+ values for the final cross-validated model. Variables are added incrementally.}
+    \label{tab:features_score}
+\end{table}
+
+
+\subsection{Testing the Final Model}
+
+The model with the strongest performance through this paper’s analysis was the model regressing on only 2 variables: sales lag 1, branded search spend adstock. As such, this was the model which was then finally tested and evaluated on the unseen test data. 
+
+For this final evaluation phase, the whole of the test data was used to train the model (the cross-validation hold-out split was removed, because this was not required any more). The model was then tested on the test portion of the data (the data which has been completely untouched until this time). After running this final model on test data, the $\bar{R}^2$
+ score of 0.6819 was achieved. This was unfortunately a drop from the previous $\bar{R}^2$ of 0.7818 achieved in the cross-validation process. 
+
+ The MAPE was also calculated to be 8.99\%. This was showing the model's percentage difference between the actual values and the predicted values. Given that this score was relatively low (below 10\%) showed that the model was actually predicting values fairly well.  
+
+The model was also used to produce an incremental Return of Advertising Spend (iROAS). This is extremely useful to marketing teams, because it allows them to identify how much an additional unit of advertising spend (on a certain channel) will drive them in revenue. 
+
+ROAS is calculated by the following equation:
+
+\begin{gather*}
+ROAS = \frac{Sales}{Channel\ Spend}
+\end{gather*}
+iROAS however, is calculated by the following:
+\begin{gather*}
+iROAS =\frac{\partial Revenue}{\partial Spend} = \beta \times (transformation \ derivative)
+\end{gather*}
+
+Whereas ROAS provides an average return, iROAS calculates the marginal impact of the next unit of spend, and therefore offers more actionable insights into how to manage marketing budgets. The final evaluated model only contained one advertising channel (Branded Search), and was only transformed using a geometric decay adstock effect, and as such, the calculation was very simple. 
+
+Note that as previously explained, the geometric decay, can in fact be written as an infinite series: 
+\[
+1 + \alpha + \alpha^2 + \alpha^3 + \dots
+\]
+which converges to
+\[
+\frac{1}{1-\alpha}, \quad |\alpha| < 1,
+\]
+where the first term is $1$ and the ratio is $\alpha$.
+
+The $transformation \ derivative$ given in the iROAS calculation, is derived using the following expression:
+\[
+\frac{\partial(\text{adstocked\_transformed\_spend})}{\partial(\text{raw\_spend})},
+\]
+and since
+\[
+\text{adstocked\_transformed\_spend} = \text{raw\_spend} \times \frac{1}{1-\alpha},
+\]
+we obtain
+\[
+\frac{\partial(\text{adstocked\_transformed\_spend})}{\partial(\text{raw\_spend})} = \frac{1}{1-\alpha}.
+\]
+
+Therefore, when only adstock is used (with no saturation),
+\[
+iROAS \text{ is equal to } \beta \times \frac{1}{1-\alpha}.
+\]
+
+Plugging in the coefficient derived from the model (0.43341103) and the adstock decay rate of 0.9), the iROAS was calculated as 4.334. It is worth noting that, because there was no saturation effect added, iROAS was constant, and did not depend on the level of spend. Deriving this figure of 4.334 is actually very useful for marketing teams. It tells them that for every additional unit of spend (USD in this case) allocated towards this channel, \$4.334 will be returned. 
+
+\section{Discussion}
+
+Having now reviewed the final evaluation of the model on out-of-sample test data, the discussion will now turn to a critical evaluation of the methods, techniques and approaches utilised in this paper. The initial research question was to assess how accurately these techniques can model the relationship between a specific marketing channel’s budget spent and revenue generated. As such, this section will review the process that was followed, evaluating its strengths and weaknesses, with respect to answering the research question.
+
+\subsection{Adstock and Saturation Effects}
+
+The functions used for adstock and saturation effects were geometric decay and the Hill Function (respectively). As explained in the literature review, these are both widely accepted as suitable functions for MMMs. The adstock transformation had no positive effect on offline channels. As previously explained, it is these channels which are expected to have a longer decay effect. It is possible that the simplicity of the geometric decay didn’t offer the required control over shape and scale that other functions (such as the Weibull) may have offered. 
+
+Given the overwhelmingly positive sentiment towards the use of the Hill function in modelling saturation, despite the poor performance of the saturation transformation, opting for this function was nevertheless deemed to have been a strong decision. One aspect which could have improved performance in this area, however, was that the adstock and saturation effects were not optimised in the same process, due to computational cost. Adapting this approach may have indeed found alternative hyperparameter combinations which were more optimal than the ones found. 
+
+\subsection{Stationarity}
+
+The Hyndman and Athanasopoulos (2018) alert of potential spurious regressions due to regressing on non-stationary time series, has been emphasised on numerous occasions throughout this paper. It has also been explained, however, that where cointegration between the variables is present, this resolves the problem of non-stationarity between variables. After taking differences to make certain variables stationary, the model performed much poorer than the baseline model. After further analysis, it was assumed that there was indeed long-run cointegration present between the variables, and making the variables stationary had destroyed this long-run relationship. 
+
+Engle and Granger (1987) suggest that even if variables used in the regression are indeed non-stationary, if there are stationary residuals, then there is likely cointegration present. Recalling the diagnostic plots of the residuals of the regression (Figure 6.3), 3 plots showed no significant cause for concern, whilst the PACF showed a spike at $\phi_{11} = 0.75$. Despite building a model to mitigate this autocorrelation at $\phi_{11}$ (by introducing lagged variables), in order to robustly prove cointegration, a formal test (Engle and Granger’s for example) for this could have been used. 
+
+\subsection{VAR Model}
+
+Whilst combining the VAR and the AIC techniques did successfully identify the number of lags to be used across response and macroeconomic regressors, as discussed in the paper, using the same number of lags for all of these variables is clearly overly simplistic. The final cross-validated model tested the 3 macroeconomic variables and their first lags. None of the models including these regressors performed very strongly. 
+
+In microeconomic theory a “normal good” is a product which consumers buy more of as the consumer’s wealth increases (most goods fall under this category). An “inferior good” is a product which consumers buy less of as their wealth increases (an example of this might be economy or budget products). Sales of both normal and inferior goods will still be predicted by the wider economy. Taking GDP as a proxy for the strength of the wider economy, GDP should in theory have an effect on all companies’ sales performances. This may take a number of weeks (or even months) to trickle down however. Simply using 1 lag for GDP (and other macroeconomic variables), did not appear to be enough to show this effect in the MMM. 
+
+One conflicting theory could be that there really is no relationship between these macroeconomic variables and the response. For this to be true, bikes would have to both be a normal and inferior good, meaning that as consumers’ wealth increases, they both buy more and less bikes (which would cancel each other out, meaning the wider economy has little effect on the response). This in fact, isn’t that strong an assumption, when reflected on properly. As a consumer’s wealth increases, their demand for recreational activities, such as cycling, may increase. However, as a consumer’s wealth decreases, they may replace more expensive modes of transport, such as driving and train, for cycling. This would effectively make bikes both a normal and inferior good, meaning that the wider economy’s performance has little impact on sales. 
+
+\subsection{Final Evaluation of the Model}
+
+There was a drop in performance of the final model, from cross-validation to testing (0.7818 to 0.6819 $\bar{R}^2$). This indicates that there were problems with the model. A common reason for a model suffering from stability like this is due to model complexity. Given the parsimonious nature of this 2 feature model, however, this is very unlikely to be the issue here.
+
+Another potential cause of this drop in performance, could be due to endogeneity, a problem where one of the independent variables is correlated with the errors of the regression. There are several reasons for why this could occur, but one of them is due to an omitted variable bias. Consider the 2nd feature that is used in the final model, branded\_search\_spend\_adstock. Branded search is where a user searches for a brand name (such as Nike or ASOS for example), in a browser. Clearly an increase in spend on this advertising channel could have a positive impact on company sales. A company will very often spend as much as it possibly can on branded search, given that the channel drives customers who are already aware of the brand, and often ready to purchase. Branded search term volume (the amount of terms searched in a browser by users) will often increase when a company offers large promotions, competitions or holds events. These factors could very well influence sales directly as well. This means that branded search and sales are influenced by another omitted variable, but branded search may not be influencing sales directly. This omitted variable effect can be seen more clearly using the Directed Acyclic Graph (DAG) in Figure 7.1.
+
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{Branded Search DAG.png}
+    \caption{Directed Acyclic Graph (DAG) showing the causal effect and direction of a company promotion on both branded search and sales.}
+    \label{fig:galaxy}
+\end{figure}
+
+
+Another potential cause for this noticeable drop in model performance, when testing on out-of-sample data, could be due to a structural break. This is an effect where the relationship between variables suffers from a shift at a particular moment in time, meaning the regression coefficients are changed. Given that the data are of a time series nature, the ordering was preserved when taking a train-test split. This may, however, have led to significant structural break occurring near to the split mark. This would indeed lead to the performance of the model changing significantly across the two portions of the data.
+
+\subsection{Final Model}
+
+The final model only contained 2 features. This was adhering to statistically sound analysis, carrying forward the model which achieved the strongest $\bar{R}^2$. In industry, however, a far more useful model would be one which contains other advertising channels. Rather than simply showing the effect of branded search on sales, a marketing team wants to understand how all of the other channels affect sales. Unfortunately, in keeping with rigorous statistical principles, this paper wasn’t able to offer this. 
+
+\section{Conclusion}
+
+The Project Aim is reiterated below: 
+
+To assess how accurately Marketing Mix Modelling techniques can model the relationship between a specific marketing channel’s budget spent and revenue generated.
+
+This aim was established to critically analyse the techniques developed in MMM, which tackle significant issues the marketing industry faces in tracking marketing effectiveness. 
+
+The key transformations that the literature and MMM industry advocates are adstock and saturation. Whilst the adstock transformation had a positive effect on the online channels, it failed to improve the relationship between offline channels and sales. This was an unexpected result, given that often offline channels are likely to exhibit longer rates of decay. Unfortunately the saturation effect had no positive impact on the model whatsoever. 
+
+The final model only received significant signal from 2 of the variables, branded search with adstock and lagged sales. Given the likely potential for missing variable bias endogeneity through the brand search and the fact that the lagged response is just resolving autocorrelation issues, this model may not provide marketing teams with the information they require. 
+
+One of the benefits of using ridge regression (as previously discussed) is that it does not set coefficients to zero. This means that, whilst regressors were gradually removed in this paper when they did not contribute to the model, they could actually have been left in. Whilst this may not have been the most statistically robust approach, it would likely give a marketing team more insight into their channel performance. There is clearly a trade-off here between a conducting a statistically robust analysis, and offering useful business insight. Given that the original research question implies multiple channels' relationships should be able to be identified, future work may consider retaining all channels regardless of their model contribution, whilst accepting the trade-off for a less statistically robust approach.
+
+Key limitations of the project have been reviewed in the Discussion section. These include: Only testing one adstock and one saturation function, Stationarity issues, and setting the same number of lags for all macroeconomic variables. 
+
+It is suggested that future work should combat these limitations. As mentioned in the Discussion section, to offer a more robust analysis, cointegration should be formally tested for. Future work could carry out this test, and if cointegration is established, then an Error Correction Model (ECM) should be utilised. This would capture the long-run equilibrium, provided by the cointegration, and the short-run dynamics. Enns et. al (2017) explains that ECMs can be utilised to avoid spurious regressions, when (near)cointegration is present. 
+
+Another suggestion for future work would be to test for the structural stability in the data. It is best-practise in the Machine Learning remit, to split the data right at the start of the model building process. The test data should then be completely untouched until the evaluation process. This is to avoid data leakage (as previously explained). A more robust time series approach, however, would be to test for structural stability across the whole data set, before performing the train-test split. The Chow Test can be used to test for structural brakes. The findings of this test can then be used to resolve this issue, using various techniques, which is beyond the scope of this paper. Structural instability could well have been the reason that the model dropped in performance between cross-validation and evaluation. 
+
+One final suggestion for future work would be to resolve the potential endogeneity due to missing variable bias problem. In the Discussion section it was mentioned that branded search and sales might both be predicted by a 3rd factor: a company promotion (for example). In order to resolve this issue, more additional company variables should be accounted for. These could include promotions, prices, weather, significant PR events, and competitor activity. To go even further, advertising channel spend and sales data could be split into geographic regions, upon which a hierarchical model is built. This would capture geographic fluctuations in the data appropriately. 
+
+In conclusion, despite a decrease in performance after cross-validation, the final model actually performed relatively well, with a $\bar{R}^2 = 0.6819$ and a $MAPE = 8.99\%$. Whilst fitting the data fairly well, unfortunately the only marketing channel providing significant signal to the model was branded search. This represents a problem when considering the model for a business use-case. This paper highlights certain difficulties around MMM techniques, and adds to the existing literature which highlight these complications. Whilst MMM techniques certainly cannot be unskilfully applied to real data, the techniques (particularly more advanced ones mentioned in the suggested future works), can offer real improvements in model performance by better accounting for time series complexities, structural stability and business components. 
+
+\begin{thebibliography}{99}
+
+\bibitem{AdvertisingAssociation2025}
+Advertising Association (2025). UK ad spend rose 9.7\% to £10.6bn in Q3 2024. Available at: \url{https://adassoc.org.uk/our-work/uk-ad-spend-rose-9-7-to-10-6bn-in-q3-2024/} (Accessed: 7 September 2025).
+
+\bibitem{ArymaLabs2022}
+Aryma Labs (2022). Marketing Measurement For The Privacy First Era. Available at: \url{https://arymalabs.com/} (Accessed: 1 August 2025).
+
+\bibitem{CaliforniaConsumerPrivacyAct2020}
+California Consumer Privacy Act (2020). California Civil Code Section 1798.100 et seq. California State Legislature.
+
+\bibitem{ChanPerry2017}
+Chan, T. and Perry, P. (2017). Challenges And Opportunities In Media Mix Modeling. New York: Google Inc.
+
+\bibitem{Chen2021}
+Chen, X. et al. (2021). Hierarchical marketing mix models with sign constraints. Chicago: Taylor \& Francis.
+
+\bibitem{Cowpertwait2008}
+Cowpertwait, P. and Metcalfe, A. (2008). Introductory Time Series with R. Seattle: Springer.
+
+\bibitem{DataProtectionAct2018}
+Data Protection Act 2018, c.12. Available at: \url{https://www.legislation.gov.uk/ukpga/2018/12/contents} (Accessed: 15 August 2025).
+
+\bibitem{DeBoefKeele2008}
+De Boef, S. and Keele, L. (2008). Taking Time Seriously. Pennsylvania: American Journal of Political Science.
+
+\bibitem{EndresRadke2018}
+Endres, A. and Radke, V. (2018). Economics for Environmental Studies. Berlin: Springer.
+
+\bibitem{EngleGranger1987}
+Engle, R. and Granger, C. (1987). Co-integration and Error Correction: Representation, Estimation, and Testing. Illinois: Econometrica.
+
+\bibitem{Enns2017}
+Enns, P. et al. (2017). Moving forward with time series analysis. New York: Research \& Politics.
+
+\bibitem{FREDGDP2025}
+Federal Reserve Economic Data (2025). Gross Domestic Product (GDP). Available at: \url{https://fred.stlouisfed.org/series/GDP} (Accessed: 1 March 2025).
+
+\bibitem{FREDUNRATE2025}
+Federal Reserve Economic Data (2025). Unemployment Rate (UNRATE). Available at: \url{https://fred.stlouisfed.org/series/UNRATE} (Accessed: 1 March 2025).
+
+\bibitem{FREDFEDFUNDS2025}
+Federal Reserve Economic Data (2025). Federal Funds Effective Rate (FEDFUNDS). Available at: \url{https://fred.stlouisfed.org/series/FEDFUNDS} (Accessed: 5 March 2025).
+
+\bibitem{Hastie2009}
+Hastie, T., Tibshirani, R. and Friedman, J. (2009). The Elements of Statistical Learning. New York: Springer.
+
+\bibitem{Hyndman2018}
+Hyndman, R. and Athanasopoulos, G. (2018). Forecasting: Principles and Practice. Melbourne: OTexts.
+
+\bibitem{James2021}
+James, G. et al. (2021). Introduction to Statistical Learning. New York: Springer.
+
+\bibitem{Jin2017}
+Jin, Y. et al. (2017). Bayesian Methods for Media Mix Modeling with Carryover and Shape Effects. New York: Google Inc.
+
+\bibitem{Kaggle2022}
+Kaggle (2022). mmm-demo-dataset. Available at: \url{https://www.kaggle.com/datasets/mattwalentosky/mmmdemodataset/data} (Accessed: 1 March 2025).
+
+\bibitem{Meridian}
+Meridian (n.d.). About MMM as a causal inference methodology. Available at: \url{https://developers.google.com/meridian/docs/basics/about-mmm-causal-inference-methodology} (Accessed: 1 September 2025).
+
+\bibitem{MetaRobyn2023}
+Meta (2023). Robyn. Available at: \url{https://facebookexperimental.github.io/Robyn/} (Accessed: 1 September 2025).
+
+\bibitem{MetaGuide2023}
+Meta (2023). An Analyst's Guide to MMM. Available at: \url{https://facebookexperimental.github.io/Robyn/docs/analysts-guide-to-MMM/} (Accessed: 2 September 2025).
+
+\bibitem{Mhitarean2017}
+Mhitarean-Cuvsinov, A. (2017). Marketing Mix Modelling from multiple regression perspective. Stockholm: KTH Royal Institute of Technology.
+
+\bibitem{Mohanna2014}
+Mohanna, R. (2014). Advertising Adstock with Maximum Period Decay. Available at: \url{https://analyticsartist.wordpress.com/2014/02/26/advertising-adstock-with-maximum-period-decay/} (Accessed: 21 May 2025).
+
+\bibitem{Recast2019}
+Recast (2019). Recast Model Technical Documentation. Available at: \url{https://getrecast.notion.site/Recast-Model-Technical-Documentation-4cffd2b88dde422eb236f0806dceba4e} (Accessed: 21 May 2025).
+
+\bibitem{SaidDickey1984}
+Said, S. and Dickey, D. (1984). Testing for Unit Roots in Autoregressive-Moving Average Models of Unknown Order. Oxford: Biometrika.
+
+\bibitem{Uber2021}
+Uber (2021). Introducing Orbit, An Open Source Package for Time Series Inference and Forecasting. Available at: \url{https://www.uber.com/blog/orbit/} (Accessed: 1 September 2025).
+
+\bibitem{Wooldridge2012}
+Wooldridge, J. (2012). Introductory Econometrics: A Modern Approach. Michigan: Michigan State University.
+
+\end{thebibliography}
+
+\newpage
+
+\clearpage
+\section{Appendix}
+\appendix
+\setcounter{table}{0}
+\renewcommand{\thetable}{A.\arabic{table}}
+
+The code used across this project can be found through the github link below:
+\url{https://github.com/Birkbeck/msc-project-source-code-files-24-25-jmthomas565/tree/main/Code/Project%20Code%20Pipeline}
+\\\\
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l l S[table-format=-1.4]}
+        \toprule
+        \textbf{\makecell{Adstock\\Decay Rate}} & \textbf{Variables} & {$\mathbf{\bar{R}^2}$} \\
+        \midrule
+        0.1 & 4 & \num{0.0105} \\
+        0.1 & 5 & \num{-0.0389} \\
+        0.1 & 6 & \num{-0.2224} \\
+        0.1 & 7 & \num{-0.9148} \\
+        0.2 & 4 & \num{0.0521} \\
+        0.2 & 5 & \num{0.0048} \\
+        0.2 & 6 & \num{-0.1743} \\
+        0.2 & 7 & \num{-0.8157} \\
+        0.3 & 4 & \num{0.0924} \\
+        0.3 & 5 & \num{0.0470} \\
+        0.3 & 6 & \num{-0.1258} \\
+        0.3 & 7 & \num{-0.7103} \\
+        0.4 & 4 & \num{0.1336} \\
+        0.4 & 5 & \num{0.0903} \\
+        0.4 & 6 & \num{-0.0761} \\
+        0.4 & 7 & \num{-0.5967} \\
+        0.5 & 4 & \num{0.1779} \\
+        0.5 & 5 & \num{0.1368} \\
+        0.5 & 6 & \num{-0.0240} \\
+        0.5 & 7 & \num{-0.4723} \\
+        0.6 & 4 & \num{0.2316} \\
+        0.6 & 5 & \num{0.1932} \\
+        0.6 & 6 & \num{0.0391} \\
+        0.6 & 7 & \num{-0.3293} \\
+        0.7 & 4 & \num{0.3053} \\
+        0.7 & 5 & \num{0.2706} \\
+        0.7 & 6 & \num{0.1247} \\
+        0.7 & 7 & \num{-0.1575} \\
+        0.8 & 4 & \num{0.4040} \\
+        0.8 & 5 & \num{0.3742} \\
+        0.8 & 6 & \num{0.2329} \\
+        0.8 & 7 & \num{0.0417} \\
+        0.9 & 4 & \num{0.4117} \\
+        0.9 & 5 & \num{0.3823} \\
+        0.9 & 6 & \num{0.2052} \\
+        0.9 & 7 & \num{0.0881} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Optimisation of decay adstock decay rates for online channels}
+    \label{tab:adstock_decay_online}
+\end{table}
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l l S[table-format=-1.4]}
+        \toprule
+        \textbf{\makecell{Adstock\\Decay Rate}} & \textbf{Variables} & {$\mathbf{\bar{R}^2}$} \\
+        \midrule
+        0.1 & 4 & \num{0.4040} \\
+        0.1 & 5 & \num{0.3742} \\
+        0.1 & 6 & \num{0.2351} \\
+        0.1 & 7 & \num{0.0456} \\
+        0.2 & 4 & \num{0.4040} \\
+        0.2 & 5 & \num{0.3742} \\
+        0.2 & 6 & \num{0.2379} \\
+        0.2 & 7 & \num{0.0502} \\
+        0.3 & 4 & \num{0.4040} \\
+        0.3 & 5 & \num{0.3742} \\
+        0.3 & 6 & \num{0.2421} \\
+        0.3 & 7 & \num{0.0550} \\
+        0.4 & 4 & \num{0.4040} \\
+        0.4 & 5 & \num{0.3742} \\
+        0.4 & 6 & \num{0.2482} \\
+        0.4 & 7 & \num{0.0610} \\
+        0.5 & 4 & \num{0.4040} \\
+        0.5 & 5 & \num{0.3742} \\
+        0.5 & 6 & \num{0.2564} \\
+        0.5 & 7 & \num{0.0639} \\
+        0.6 & 4 & \num{0.4040} \\
+        0.6 & 5 & \num{0.3742} \\
+        0.6 & 6 & \num{0.2677} \\
+        0.6 & 7 & \num{0.0667} \\
+        0.7 & 4 & \num{0.4040} \\
+        0.7 & 5 & \num{0.3742} \\
+        0.7 & 6 & \num{0.2849} \\
+        0.7 & 7 & \num{0.0707} \\
+        0.8 & 4 & \num{0.4043} \\
+        0.8 & 5 & \num{0.3746} \\
+        0.8 & 6 & \num{0.3072} \\
+        0.8 & 7 & \num{0.0819} \\
+        0.9 & 4 & \num{0.4049} \\
+        0.9 & 5 & \num{0.3752} \\
+        0.9 & 6 & \num{0.3315} \\
+        0.9 & 7 & \num{0.0962} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Optimisation of decay adstock decay rates for offline channels}
+    \label{tab:adstock_decay}
+\end{table}
+
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l l S[table-format=-1.4]}
+        \toprule
+        \textbf{K} & \textbf{s} & {$\mathbf{\bar{R}^2}$} \\
+        \midrule
+        0.1 & 0.1 & \num{0.0047} \\
+        0.1 & 0.2 & \num{-0.1031} \\
+        0.1 & 0.3 & \num{-0.1998} \\
+        0.1 & 0.4 & \num{-0.2746} \\
+        0.1 & 0.5 & \num{-0.3647} \\
+        0.1 & 0.6 & \num{-0.4313} \\
+        0.1 & 0.7 & \num{-0.4594} \\
+        0.1 & 0.8 & \num{-0.4198} \\
+        0.1 & 0.9 & \num{-0.4926} \\
+        0.2 & 0.1 & \num{0.0067} \\
+        0.2 & 0.2 & \num{-0.1000} \\
+        0.2 & 0.3 & \num{-0.1968} \\
+        0.2 & 0.4 & \num{-0.2723} \\
+        0.2 & 0.5 & \num{-0.3654} \\
+        0.2 & 0.6 & \num{-0.4307} \\
+        0.2 & 0.7 & \num{-0.4592} \\
+        0.2 & 0.8 & \num{-0.4197} \\
+        0.2 & 0.9 & \num{-0.4925} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Optimisation of  $K$ and $s$ hyperparameter for online channels. Only a portion of the parameter space is shown, due to the table being very long.}
+    \label{tab:ks_decay}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{l l S[table-format=-1.4]}
+        \toprule
+        \textbf{K} & \textbf{s} & {$\mathbf{\bar{R}^2}$} \\
+        \midrule
+        0.1 & 0.1 & \num{0.4102} \\
+        0.1 & 0.2 & \num{0.4102} \\
+        0.1 & 0.3 & \num{0.4102} \\
+        0.1 & 0.4 & \num{0.4102} \\
+        0.1 & 0.5 & \num{0.4102} \\
+        0.1 & 0.6 & \num{0.4102} \\
+        0.1 & 0.7 & \num{0.4102} \\
+        0.1 & 0.8 & \num{0.4102} \\
+        0.1 & 0.9 & \num{0.4102} \\
+        0.2 & 0.1 & \num{0.4102} \\
+        0.2 & 0.2 & \num{0.4102} \\
+        0.2 & 0.3 & \num{0.4102} \\
+        0.2 & 0.4 & \num{0.4102} \\
+        0.2 & 0.5 & \num{0.4102} \\
+        0.2 & 0.6 & \num{0.4102} \\
+        0.2 & 0.7 & \num{0.4102} \\
+        0.2 & 0.8 & \num{0.4102} \\
+        0.2 & 0.9 & \num{0.4102} \\
+                \bottomrule
+    \end{tabular}
+    \caption{Optimisation of $K$ and $s$ hyperparameter for offline channels. Only a portion of the parameter space is shown, due to the table being very long.}
+    \label{tab:ks_decay_constant}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{c l}
+        \toprule
+        \textbf{\makecell{Number of\\Variables}} & \textbf{Variables} \\
+        \midrule
+        1 & branded\_search\_spend \\
+        \midrule
+        2 & \makecell[l]{branded\_search\_spend\\nonbranded\_search\_spend} \\
+        \midrule
+        3 & \makecell[l]{branded\_search\_spend\\nonbranded\_search\_spend\\facebook\_spend} \\
+        \midrule
+        4 & \makecell[l]{branded\_search\_spend\\nonbranded\_search\_spend\\facebook\_spend\\print\_spend} \\
+        \midrule
+        5 & \makecell[l]{branded\_search\_spend\\nonbranded\_search\_spend\\facebook\_spend\\print\_spend\\ooh\_spend} \\
+        \midrule
+        6 & \makecell[l]{branded\_search\_spend\\nonbranded\_search\_spend\\facebook\_spend\\print\_spend\\ooh\_spend\\tv\_spend} \\
+        \midrule
+        7 & \makecell[l]{branded\_search\_spend\\nonbranded\_search\_spend\\facebook\_spend\\print\_spend\\ooh\_spend\\tv\_spend\\radio\_spend} \\
+        \bottomrule
+    \end{tabular}
+    \caption{Demonstration of the iterable variable addition in the baseline model}
+    \label{tab:adstock_variables}
+\end{table}
+
+        
+\end{document}
