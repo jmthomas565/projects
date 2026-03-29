@@ -1,12 +1,17 @@
 # Python environment 
 customer_class_venv/
 **/venv/
-__pycashe__/
+__pycache__/
 *.pyc
 
 # ML flow 
 mlruns/
 .trash/
+
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+.virtual_documents/
 
 
 # System files 
