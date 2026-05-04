@@ -238,5 +238,3 @@ for a in artifacts:
 # 2. Verify the URI you are sending to the registry
 print(f"\nAttempting to register from: runs:/{best_run.info.run_id}/model")
 
-
-# %% Predicting new customers
