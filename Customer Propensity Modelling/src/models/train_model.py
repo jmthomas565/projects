@@ -1,3 +1,13 @@
+# %% importing packages
+
+from sklearn.model_selection import StratifiedKFold
+from mlflow.tracking import MlflowClient
+import mlflow
+import mlflow.sklearn
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GridSearchCV
+import joblib
+
 
 # %% Setting up K-fold 
 
@@ -11,9 +21,6 @@ KFS = StratifiedKFold(n_splits = 5, shuffle = True, random_state = 42)
 
 # %% Storing in MLflow
 
-import mlflow
-import os
-import mlflow.sklearn
 
 # This is the "Magic Line" that forces MLflow to save HERE
 PROJECT_ROOT = "/Users/jmthomas565/Desktop/Education/Machine Learning Practise/Customer Propensity Model"
@@ -113,19 +120,11 @@ with mlflow.start_run(run_name="XGBoost_Tuned") as run:
     mlflow.log_params(grid_search_xgb.best_params_)
     mlflow.log_metric("roc_auc_cv_score", grid_search_xgb.best_score_)
 
-
-    # Log the best estimator found by the search. 
-    # This is the production-ready model trained on the full dataset.
-    mlflow.sklearn.log_model(
-    sk_model=grid_search_xgb.best_estimator_, 
-    artifact_path="model", # The folder path in MLflow UI
-    registered_model_name="Customer_Propensity_Project" # Name for the Model Registry
-    )
-
-
+# Use the native XGBoost logger, but keep your registration name here!
     mlflow.xgboost.log_model(
-    xgb_model=grid_search_xgb.best_estimator_, 
-    artifact_path="model" # <--- This MUST be "model" to match your Gatekeeper
+        xgb_model=grid_search_xgb.best_estimator_, 
+        artifact_path="model", 
+        registered_model_name="Customer_Propensity_Project" # Moved this here!
     )
 
 
@@ -147,8 +146,6 @@ print("Unique values in y_train:", y_train.unique())
 
 # %% Selecting the winning model 
 
-import mlflow
-from mlflow.tracking import MlflowClient
 
 # 1. Initialize the client
 client = MlflowClient()
@@ -185,8 +182,7 @@ else:
 
 # %% 🏆 AUTOMATED WINNER SELECTION & PROMOTION
 
-from mlflow.tracking import MlflowClient
-import mlflow
+
 
 client = MlflowClient()
 model_name = "Customer_Propensity_Project"
@@ -237,4 +233,9 @@ for a in artifacts:
 
 # 2. Verify the URI you are sending to the registry
 print(f"\nAttempting to register from: runs:/{best_run.info.run_id}/model")
+
+
+# Save the processor so the prediction script can use it
+joblib.dump(processor, 'models/feature_processor.joblib')
+print("Processor saved to models/feature_processor.joblib")
 

@@ -4,6 +4,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import numpy as np
 
+
+
 def prepare_data (file_path):
 
     bank_data = pd.read_csv(file_path)
@@ -28,8 +30,6 @@ def prepare_data (file_path):
 if __name__ == "__main__":
 
     data_path = "/Users/jmthomas565/Desktop/Coding/Coding Practise - 2024/Git Repo (Projects)/Customer Propensity Modelling/Data/Bank Marketing - UC Irvine ML Repo.csv"
-
-    
 
     x_train, x_test, y_train, y_test = prepare_data(data_path)
 
