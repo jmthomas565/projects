@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler
 from sklearn.base import BaseEstimator, TransformerMixin
-from data.make_dataset import prepare_data # Keeping this here is fine for MVP
+from src.data.make_dataset import prepare_data
 
 class FeatureProcessor(BaseEstimator, TransformerMixin):
     def __init__(self, num_cols, cat_cols, ord_cols, custom_ord_cats):

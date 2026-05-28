@@ -24,6 +24,9 @@ def prepare_data (file_path):
         x, y, test_size=0.30, random_state=42, stratify=y, shuffle=True
         )
     
+    y_train = y_train.astype(str).str.strip().str.lower().map({'no': 0, 'yes': 1})
+    y_test = y_test.astype(str).str.strip().str.lower().map({'no': 0, 'yes': 1})
+    
     return x_train, x_test, y_train, y_test 
 
 
@@ -36,5 +39,9 @@ if __name__ == "__main__":
     print (f"x_train shape: {x_train.shape}, x_test shape: {x_test.shape}") 
            
     print (x_train.head())
+
+    print (y_train.value_counts())
+
+    print (y_test.value_counts())
 
     
