@@ -42,7 +42,7 @@ def run_feature_engineering(x_train, x_test):
     x_train_raw = processor.fit_transform(x_train)
     x_test_raw = processor.transform(x_test)
 
-    # 2. Create the column list (So your DataFrame isn't just numbers)
+    # 2. Create the column list (So the DataFrame isn't just numbers)
     ohe_cols = list(processor.encoder_.get_feature_names_out(CATEGORICAL_FEATURES))
     all_feature_names = NUMERIC_FEATURES + ohe_cols + ORDINAL_FEATURES
 
@@ -53,7 +53,7 @@ def run_feature_engineering(x_train, x_test):
     return x_train_df, x_test_df, processor
 
 if __name__ == "__main__":
-    # Just verify this path exists on your machine!
+    #Verifying the code with an exact pathname
     path = "/Users/jmthomas565/Desktop/Coding/Coding Practise - 2024/Git Repo (Projects)/Customer Propensity Modelling/Data/Bank Marketing - UC Irvine ML Repo.csv"
     
     x_train, x_test, y_train, y_test = prepare_data(path)

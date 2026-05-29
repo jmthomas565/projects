@@ -8,23 +8,22 @@ from src.models.train_model import model_selection
 
 
 def main():
-    # 1. Load Data
+    # loads the data
     print("--- Loading Data ---")
     x_train, x_test, y_train, y_test = prepare_data("data/Bank Marketing - UC Irvine ML Repo.csv")
 
-    # 2. Build Features
+    # builds features
     print("--- Engineering Features ---")
     x_train_final, x_test_final, processor = run_feature_engineering(x_train, x_test)
 
-    # 4. Save the Processor (The "Translator")
-    # This is vital for the Prediction script to work later!
+    # saving the processor
     print("Processor saved to models/feature_processor.joblib")
-    joblib.dump(processor, 'models/feature_processor.joblib')
 
-
+    # training the models
     train_logistic_reg(x_train_final, y_train)
     train_gradient_boost(x_train_final, y_train)
 
+    # run automated Champion-Challenger gatekeeper for production deployment
     model_selection(processor)
     
     print("Pipeline Complete! Run 'mlflow ui' to see your results.")
