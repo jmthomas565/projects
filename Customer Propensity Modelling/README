@@ -42,6 +42,7 @@ Customer Propensity Modelling/
 ├── main.py                                     # Pipeline execution orchestrator
 └── requirements.txt                            # Explicit environment dependencies
 
+---
 
 ## Setup and Installation
 
